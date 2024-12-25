@@ -38,6 +38,11 @@
     #saveSettings:hover {
       background-color: #45a049;
     }
+    .settings-section {
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -45,14 +50,37 @@
   
   <div class="settings-group">
     <h2>Einstellungen</h2>
-    <label>
-      Zeit bis "Watched" (Sekunden):
-      <input type="number" id="watchedTime" min="1" max="600" value="30">
-    </label>
-    <label>
-      Fortschritt bis "Watched" (%):
-      <input type="number" id="watchedProgress" min="1" max="100" value="50">
-    </label>
+    
+    <div class="settings-section">
+      <h3>Normale Videos</h3>
+      <label>
+        Zeit bis "Watched" (Sekunden):
+        <input type="number" id="watchedTime" min="1" max="600" value="30">
+      </label>
+      <label>
+        Fortschritt bis "Watched" (%):
+        <input type="number" id="watchedProgress" min="1" max="100" value="50">
+      </label>
+    </div>
+
+    <div class="settings-section">
+      <h3>Hover Previews</h3>
+      <label>
+        <input type="checkbox" id="useCustomHoverSettings" checked>
+        Separate Einstellungen für Hover Previews verwenden
+      </label>
+      <div id="hoverSettings">
+        <label>
+          Zeit bis "Watched" (Sekunden):
+          <input type="number" id="hoverWatchedTime" min="1" max="600" value="30">
+        </label>
+        <label>
+          Fortschritt bis "Watched" (%):
+          <input type="number" id="hoverWatchedProgress" min="1" max="100" value="50">
+        </label>
+      </div>
+    </div>
+
     <button id="saveSettings">Einstellungen speichern</button>
   </div>
 

@@ -68,9 +68,22 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
 
   let progressChecked = false;
 
-  chrome.storage.local.get(["watchedTime", "watchedProgress"], (settings) => {
-    const requiredTime = settings.watchedTime || 30;
-    const requiredProgress = settings.watchedProgress || 50;
+  chrome.storage.local.get([
+    'watchedTime',
+    'watchedProgress',
+    'useCustomHoverSettings',
+    'hoverWatchedTime',
+    'hoverWatchedProgress'
+  ], (settings) => {
+    const useCustomHover = settings.useCustomHoverSettings ?? true;
+    
+    const requiredTime = isHoverPreview && useCustomHover
+      ? (settings.hoverWatchedTime || 30)
+      : (settings.watchedTime || 30);
+      
+    const requiredProgress = isHoverPreview && useCustomHover
+      ? (settings.hoverWatchedProgress || 50)
+      : (settings.watchedProgress || 50);
 
     const timeUpdateHandler = () => {
       const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
@@ -81,7 +94,9 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
           `[Watchmarker] Video-Fortschritt für ${videoId}:`,
           `Zeit: ${timeWatched.toFixed(1)}s,`,
           `Dauer: ${videoPlayer.duration.toFixed(1)}s,`,
-          `Fortschritt: ${progress.toFixed(1)}%`
+          `Fortschritt: ${progress.toFixed(1)}%,`,
+          `Typ: ${isHoverPreview ? 'Hover' : 'Normal'},`,
+          `Erforderlich: ${requiredTime}s oder ${requiredProgress}%`
         );
 
         const shouldMarkAsWatched =
