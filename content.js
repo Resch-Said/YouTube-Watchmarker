@@ -34,7 +34,9 @@ async function markWatchedVideos() {
   );
 
   for (const videoElement of videoElements) {
-    const videoLink = videoElement.querySelector("a[href*='/watch?v='], a[href*='/shorts/']");
+    const videoLink = videoElement.querySelector(
+      "a[href*='/watch?v='], a[href*='/shorts/']"
+    );
     if (!videoLink) continue;
 
     try {
@@ -43,10 +45,14 @@ async function markWatchedVideos() {
 
       const watchedVideo = watchHistory.find((video) => video.id === videoId);
       const isShort = videoLink.href.includes("/shorts/");
-      
+
       // Bestimme das korrekte Container-Element für die Labels
-      const labelContainer = isShort ? videoElement.querySelector('.shortsLockupViewModelHostThumbnailContainer') : videoElement;
-      
+      const labelContainer = isShort
+        ? videoElement.querySelector(
+            ".shortsLockupViewModelHostThumbnailContainer"
+          )
+        : videoElement;
+
       if (watchedVideo && !labelContainer.querySelector(".watched-label")) {
         labelContainer.classList.add("watched-thumbnail");
 
@@ -81,20 +87,27 @@ async function markWatchedVideos() {
 function getVideoIdFromUrl(url) {
   try {
     // Für relative URLs (Shorts)
-    if (url.startsWith('/shorts/')) {
-      return url.split('/shorts/')[1];
+    if (url.startsWith("/shorts/")) {
+      return url.split("/shorts/")[1];
     }
-    
+
     // Für absolute URLs
     const urlObj = new URL(url);
-    if (urlObj.pathname.includes('/shorts/')) {
-      return urlObj.pathname.split('/shorts/')[1];
+    if (urlObj.pathname.includes("/shorts/")) {
+      return urlObj.pathname.split("/shorts/")[1];
     }
     return urlObj.searchParams.get("v");
   } catch (error) {
     console.error("[Watchmarker] Error extracting video ID:", error);
     return null;
   }
+}
+
+function getVideoType(isHoverPreview, isShort) {
+  if (isShort) {
+    return isHoverPreview ? "Shorts-Hover" : "Shorts";
+  }
+  return isHoverPreview ? "Hover" : "Normal";
 }
 
 function handleVideoPlayback(
@@ -137,13 +150,12 @@ function handleVideoPlayback(
         const timeWatched = videoPlayer.currentTime;
 
         if (!isNaN(progress) && !isNaN(timeWatched)) {
+          const videoType = getVideoType(isHoverPreview, isShort);
           console.log(
-            `[Watchmarker] Video-Fortschritt für ${videoId}:`,
-            `Zeit: ${timeWatched.toFixed(1)}s,`,
-            `Dauer: ${videoPlayer.duration.toFixed(1)}s,`,
-            `Fortschritt: ${progress.toFixed(1)}%,`,
-            `Typ: ${isHoverPreview ? "Hover" : "Normal"},`,
-            `Erforderlich: ${requiredTime}s oder ${requiredProgress}%`
+            `[Watchmarker] ${videoType}:`,
+            `${timeWatched.toFixed(1)}s/${videoPlayer.duration.toFixed(1)}s`,
+            `(${progress.toFixed(1)}%)`,
+            `Ziel: ${requiredTime}s/${requiredProgress}%`
           );
 
           const shouldMarkAsWatched =
@@ -151,11 +163,6 @@ function handleVideoPlayback(
 
           if (!progressChecked && shouldMarkAsWatched) {
             progressChecked = true;
-            console.log(
-              "[Watchmarker] Video als gesehen markiert:",
-              videoId,
-              isHoverPreview ? "(Hover-Preview)" : "(Normal)"
-            );
             saveWatchHistory({
               id: videoId,
               date: new Date().toLocaleDateString(),
@@ -206,7 +213,6 @@ function checkForHoverPlayback() {
   const thumbnails = document.querySelectorAll(
     "ytd-thumbnail, ytd-reel-item-renderer"
   );
-  console.log("[Watchmarker] Gefundene Thumbnails:", thumbnails.length);
 
   thumbnails.forEach((thumbnail) => {
     if (!thumbnail.dataset.watchmarkerHover) {
@@ -221,9 +227,8 @@ function checkForHoverPlayback() {
 
         const isShort = videoLink.href.includes("/shorts/");
         console.log(
-          "[Watchmarker] Hover auf",
-          isShort ? "Short" : "Video",
-          "erkannt:",
+          "[Watchmarker] Hover erkannt:",
+          isShort ? "Shorts" : "Video",
           videoId
         );
 
@@ -235,13 +240,11 @@ function checkForHoverPlayback() {
           const hoverPlayer = previewContainer?.querySelector("video");
 
           if (hoverPlayer) {
-            console.log("[Watchmarker] Hover-Video gefunden für ID:", videoId);
             clearInterval(checkInterval);
-            handleVideoPlayback(hoverPlayer, videoId, true);
-          } else {
-            console.log("[Watchmarker] Suche nach Hover-Video...", checkCount);
-            checkCount++;
-            if (checkCount > 10) clearInterval(checkInterval);
+            // Übergebe isShort an handleVideoPlayback
+            handleVideoPlayback(hoverPlayer, videoId, true, isShort);
+          } else if (++checkCount > 10) {
+            clearInterval(checkInterval);
           }
         }, 200);
       });

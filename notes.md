@@ -51,3 +51,31 @@
 ### Tags
 
 #performance #optimization #shorts #video-detection #hover-effect
+
+## Video-Typ-Erkennung Update
+
+[Timestamp: 2024-03-21]
+**Priority: High**
+
+### Änderungen
+
+- Verbesserte Typ-Erkennung:
+  - Normal: Standard-Videos
+  - Hover: Video-Vorschauen beim Hover
+  - Shorts: YouTube Shorts
+  - Shorts-Hover: Shorts-Vorschauen beim Hover
+- Optimierte Logging-Ausgaben:
+  - Kompakteres Format
+  - Relevante Fortschrittsinformationen
+  - Typ-spezifische Zielwerte
+
+### Standardwerte
+
+- Normale Videos: 30s oder 50%
+- Shorts: 15s oder 30%
+- Hover: Konfigurierbar (Standard wie Normal)
+- Shorts-Hover: Konfigurierbar (Standard wie Shorts)
+
+### Tags
+
+#video-types #logging #user-experience
