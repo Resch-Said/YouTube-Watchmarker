@@ -1,108 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Watchmarker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      min-width: 300px;
-    }
-    .settings-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin: 5px 0;
-    }
-    input[type="number"] {
-      width: 60px;
-    }
-    button {
-      padding: 10px;
-      background-color: #f44336;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-    }
-    button:hover {
-      background-color: #d32f2f;
-    }
-    #saveSettings {
-      background-color: #4CAF50;
-    }
-    #saveSettings:hover {
-      background-color: #45a049;
-    }
-    .settings-section {
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 10px;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h1>YouTube Watchmarker</h1>
-  
-  <div class="settings-group">
-    <h2>Einstellungen</h2>
-    
-    <div class="settings-section">
-      <h3>Normale Videos</h3>
-      <label>
-        Zeit bis "Watched" (Sekunden):
-        <input type="number" id="watchedTime" min="1" max="600" value="30">
-      </label>
-      <label>
-        Fortschritt bis "Watched" (%):
-        <input type="number" id="watchedProgress" min="1" max="100" value="50">
-      </label>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Watchmarker</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        min-width: 300px;
+      }
+      .settings-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin: 5px 0;
+      }
+      input[type="number"] {
+        width: 60px;
+      }
+      button {
+        padding: 10px;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #d32f2f;
+      }
+      #saveSettings {
+        background-color: #4caf50;
+      }
+      #saveSettings:hover {
+        background-color: #45a049;
+      }
+      .settings-section {
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>YouTube Watchmarker</h1>
 
-    <div class="settings-section">
-      <h3>Shorts</h3>
-      <label>
-        <input type="checkbox" id="useCustomShortsSettings" checked>
-        Separate Einstellungen für Shorts verwenden
-      </label>
-      <div id="shortsSettings">
+    <div class="settings-group">
+      <h2>Einstellungen</h2>
+
+      <div class="settings-section">
+        <h3>Normale Videos</h3>
         <label>
           Zeit bis "Watched" (Sekunden):
-          <input type="number" id="shortsWatchedTime" min="1" max="600" value="15">
+          <input type="number" id="watchedTime" min="1" max="600" value="30" />
         </label>
         <label>
           Fortschritt bis "Watched" (%):
-          <input type="number" id="shortsWatchedProgress" min="1" max="100" value="30">
+          <input
+            type="number"
+            id="watchedProgress"
+            min="1"
+            max="100"
+            value="50"
+          />
         </label>
       </div>
-    </div>
 
-    <div class="settings-section">
-      <h3>Hover Previews</h3>
-      <label>
-        <input type="checkbox" id="useCustomHoverSettings" checked>
-        Separate Einstellungen für Hover Previews verwenden
-      </label>
-      <div id="hoverSettings">
+      <div class="settings-section">
+        <h3>Shorts</h3>
         <label>
-          Zeit bis "Watched" (Sekunden):
-          <input type="number" id="hoverWatchedTime" min="1" max="600" value="30">
+          <input type="checkbox" id="useCustomShortsSettings" checked />
+          Separate Einstellungen für Shorts verwenden
         </label>
-        <label>
-          Fortschritt bis "Watched" (%):
-          <input type="number" id="hoverWatchedProgress" min="1" max="100" value="50">
-        </label>
+        <div id="shortsSettings">
+          <label>
+            Zeit bis "Watched" (Sekunden):
+            <input
+              type="number"
+              id="shortsWatchedTime"
+              min="1"
+              max="600"
+              value="15"
+            />
+          </label>
+          <label>
+            Fortschritt bis "Watched" (%):
+            <input
+              type="number"
+              id="shortsWatchedProgress"
+              min="1"
+              max="100"
+              value="30"
+            />
+          </label>
+        </div>
       </div>
+
+      <div class="settings-section">
+        <h3>Hover Previews</h3>
+        <label>
+          <input type="checkbox" id="useCustomHoverSettings" checked />
+          Separate Einstellungen für Hover Previews verwenden
+        </label>
+        <div id="hoverSettings">
+          <label>
+            Zeit bis "Watched" (Sekunden):
+            <input
+              type="number"
+              id="hoverWatchedTime"
+              min="1"
+              max="600"
+              value="30"
+            />
+          </label>
+          <label>
+            Fortschritt bis "Watched" (%):
+            <input
+              type="number"
+              id="hoverWatchedProgress"
+              min="1"
+              max="100"
+              value="50"
+            />
+          </label>
+        </div>
+      </div>
+
+      <button id="saveSettings">Einstellungen speichern</button>
     </div>
 
-    <button id="saveSettings">Einstellungen speichern</button>
-  </div>
-
-  <button id="clearWatchHistory">Watch-History leeren</button>
-  <script src="popup.js"></script>
-</body>
+    <button id="clearWatchHistory">Watch-History leeren</button>
+    <script src="popup.js"></script>
+  </body>
 </html>

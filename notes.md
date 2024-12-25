@@ -52,6 +52,51 @@
 
 #performance #optimization #shorts #video-detection #hover-effect
 
+## Performance-Optimierung Update
+
+[Timestamp: 2024-03-21]
+**Priority: High**
+
+### Implementierte Optimierungen
+
+- Cache-System erweitert:
+
+  - Einführung von `processedVideos` und `processedHovers` Sets
+  - Regelmäßige Cache-Bereinigung (alle 30s)
+  - Optimierte Speichernutzung
+
+- DOM-Manipulationen verbessert:
+
+  - Selektive Verarbeitung mit `:not([data-watchmarker-processed])`
+  - Reduzierte Observer-Events (ignoriert Attribute/Text)
+  - Passive Event-Listener für bessere Scroll-Performance
+
+- Timing-Optimierungen:
+  - Throttling für Observer (1.5s Verzögerung)
+  - Kürzere Hover-Check-Intervalle (250ms)
+  - Prozess-Intervall auf 3s erhöht
+  - Reduzierte Hover-Check-Versuche (5 statt 10)
+
+### Konfigurierbare Konstanten
+
+```javascript
+CACHE_UPDATE_INTERVAL = 30000; // Cache-Reset
+PROCESS_INTERVAL = 3000; // Hauptprozess
+THROTTLE_DELAY = 1500; // Observer-Throttling
+HOVER_CHECK_INTERVAL = 250; // Hover-Erkennung
+```
+
+### Ergebnisse
+
+- Deutlich reduzierte CPU-Last
+- Verbesserte Reaktionszeit
+- Stabilere Performance bei vielen Videos
+- Geringerer Speicherverbrauch
+
+### Tags
+
+#performance #optimization #caching #dom-manipulation
+
 ## Video-Typ-Erkennung Update
 
 [Timestamp: 2024-03-21]

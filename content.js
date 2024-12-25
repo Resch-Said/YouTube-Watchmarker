@@ -1,6 +1,12 @@
 let watchHistoryCache = null;
 let isProcessing = false;
 
+// Cache-Konstanten
+const CACHE_UPDATE_INTERVAL = 30000; // 30 Sekunden
+const PROCESS_INTERVAL = 3000; // 3 Sekunden
+const THROTTLE_DELAY = 1500; // 1.5 Sekunden
+const HOVER_CHECK_INTERVAL = 250; // 250ms
+
 async function getWatchHistory() {
   return new Promise((resolve) => {
     chrome.storage.local.get("watchHistory", (data) => {
@@ -23,14 +29,17 @@ function saveWatchHistory(video) {
   );
 }
 
+// Optimiertes Video-Tracking
+const processedVideos = new Set();
+const processedHovers = new Set();
+
 async function markWatchedVideos() {
   if (isProcessing) return;
   isProcessing = true;
 
   const watchHistory = await getWatchHistory();
-  // Spezifischere Selektoren für verschiedene Arten von Thumbnails
   const videoElements = document.querySelectorAll(
-    "ytd-thumbnail:not([hidden]), ytd-rich-item-renderer[is-slim-media]"
+    "ytd-thumbnail:not([data-watchmarker-processed]), ytd-rich-item-renderer[is-slim-media]:not([data-watchmarker-processed])"
   );
 
   for (const videoElement of videoElements) {
@@ -41,9 +50,14 @@ async function markWatchedVideos() {
 
     try {
       const videoId = getVideoIdFromUrl(videoLink.href);
-      if (!videoId) continue;
+      if (!videoId || processedVideos.has(videoId)) continue;
+
+      processedVideos.add(videoId);
+      videoElement.dataset.watchmarkerProcessed = "true";
 
       const watchedVideo = watchHistory.find((video) => video.id === videoId);
+      if (!watchedVideo) continue;
+
       const isShort = videoLink.href.includes("/shorts/");
 
       // Bestimme das korrekte Container-Element für die Labels
@@ -78,7 +92,6 @@ async function markWatchedVideos() {
     } catch (error) {
       console.error("[Watchmarker] Error processing video:", error);
     }
-    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 
   isProcessing = false;
@@ -221,30 +234,25 @@ function checkForVideoPlayers() {
   });
 }
 
-// Hover-Playback-Erkennung
+// Optimierte Hover-Erkennung
 function checkForHoverPlayback() {
   const thumbnails = document.querySelectorAll(
-    "ytd-thumbnail, ytd-reel-item-renderer"
+    "ytd-thumbnail:not([data-watchmarker-hover]), ytd-reel-item-renderer:not([data-watchmarker-hover])"
   );
 
   thumbnails.forEach((thumbnail) => {
-    if (!thumbnail.dataset.watchmarkerHover) {
-      thumbnail.dataset.watchmarkerHover = "true";
+    thumbnail.dataset.watchmarkerHover = "true";
 
-      thumbnail.addEventListener("mouseover", () => {
+    thumbnail.addEventListener(
+      "mouseover",
+      () => {
         const videoLink = thumbnail.querySelector("a");
         if (!videoLink) return;
 
         const videoId = getVideoIdFromUrl(videoLink.href);
-        if (!videoId) return;
+        if (!videoId || processedHovers.has(videoId)) return;
 
         const isShort = videoLink.href.includes("/shorts/");
-        console.log(
-          "[Watchmarker] Hover erkannt:",
-          isShort ? "Shorts" : "Video",
-          videoId
-        );
-
         let checkCount = 0;
         const checkInterval = setInterval(() => {
           const previewContainer = document.querySelector(
@@ -254,58 +262,61 @@ function checkForHoverPlayback() {
 
           if (hoverPlayer) {
             clearInterval(checkInterval);
-            // Übergebe isShort an handleVideoPlayback
+            processedHovers.add(videoId);
             handleVideoPlayback(hoverPlayer, videoId, true, isShort);
-          } else if (++checkCount > 10) {
+          } else if (++checkCount > 5) {
+            // Reduzierte Anzahl der Versuche
             clearInterval(checkInterval);
           }
-        }, 200);
-      });
-    }
+        }, HOVER_CHECK_INTERVAL);
+      },
+      { passive: true }
+    ); // Optimierung für Event-Listener
   });
 }
 
-// Observer für Hover-Playback mit Throttling
-let throttleTimeout = null;
-const hoverObserver = new MutationObserver(() => {
-  if (!throttleTimeout) {
-    throttleTimeout = setTimeout(() => {
-      checkForHoverPlayback();
-      throttleTimeout = null;
-    }, 1000);
-  }
-});
-
-// Observer für Video-Player
-const videoObserver = new MutationObserver(checkForVideoPlayers);
-videoObserver.observe(document.body, {
+// Optimierte Observer
+const observerOptions = {
   childList: true,
   subtree: true,
-});
+  attributes: false, // Ignoriere Attributänderungen
+  characterData: false, // Ignoriere Textänderungen
+};
 
-// Observer für Hover-Playback
-hoverObserver.observe(document.body, {
-  childList: true,
-  subtree: true,
-});
+// Effizienteres Throttling
+function throttle(func, delay) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      func.apply(this, args);
+      lastCall = now;
+    }
+  };
+}
 
-// MutationObserver für Videomarkierungen
-const observer = new MutationObserver(() => {
-  markWatchedVideos();
-});
+const throttledMarkVideos = throttle(markWatchedVideos, THROTTLE_DELAY);
+const throttledCheckHover = throttle(checkForHoverPlayback, THROTTLE_DELAY);
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true,
-});
+// Observer mit optimierten Optionen
+const observer = new MutationObserver(throttledMarkVideos);
+const hoverObserver = new MutationObserver(throttledCheckHover);
+
+observer.observe(document.body, observerOptions);
+hoverObserver.observe(document.body, observerOptions);
+
+// Cache regelmäßig leeren
+setInterval(() => {
+  processedVideos.clear();
+  processedHovers.clear();
+  watchHistoryCache = null;
+}, CACHE_UPDATE_INTERVAL);
+
+// Optimierte Aktualisierungsintervalle
+setInterval(markWatchedVideos, PROCESS_INTERVAL);
+setInterval(checkForHoverPlayback, PROCESS_INTERVAL);
 
 // Initialer Check
 markWatchedVideos();
 checkForVideoPlayers();
 checkForHoverPlayback();
-
-// Regelmäßige Aktualisierung
-setInterval(markWatchedVideos, 2000);
-
-// Regelmäßige Aktualisierung der Hover-Erkennung
-setInterval(checkForHoverPlayback, 2000);
