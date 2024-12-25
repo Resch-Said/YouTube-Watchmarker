@@ -19,7 +19,8 @@
           "configFile": "./babel.config.json"
         }
       ]
-    }
+    },
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"]
   }
 }
 
