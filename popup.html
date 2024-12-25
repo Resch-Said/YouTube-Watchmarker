@@ -64,6 +64,24 @@
     </div>
 
     <div class="settings-section">
+      <h3>Shorts</h3>
+      <label>
+        <input type="checkbox" id="useCustomShortsSettings" checked>
+        Separate Einstellungen für Shorts verwenden
+      </label>
+      <div id="shortsSettings">
+        <label>
+          Zeit bis "Watched" (Sekunden):
+          <input type="number" id="shortsWatchedTime" min="1" max="600" value="15">
+        </label>
+        <label>
+          Fortschritt bis "Watched" (%):
+          <input type="number" id="shortsWatchedProgress" min="1" max="100" value="30">
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h3>Hover Previews</h3>
       <label>
         <input type="checkbox" id="useCustomHoverSettings" checked>

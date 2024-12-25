@@ -2,42 +2,61 @@
 chrome.storage.local.get([
   'watchedTime',
   'watchedProgress',
+  'useCustomShortsSettings',
+  'shortsWatchedTime',
+  'shortsWatchedProgress',
   'useCustomHoverSettings',
   'hoverWatchedTime',
   'hoverWatchedProgress'
 ], (data) => {
+  // Normale Videos
   document.getElementById('watchedTime').value = data.watchedTime || 30;
   document.getElementById('watchedProgress').value = data.watchedProgress || 50;
+  
+  // Shorts
+  document.getElementById('useCustomShortsSettings').checked = data.useCustomShortsSettings ?? true;
+  document.getElementById('shortsWatchedTime').value = data.shortsWatchedTime || 15;
+  document.getElementById('shortsWatchedProgress').value = data.shortsWatchedProgress || 30;
+  
+  // Hover
   document.getElementById('useCustomHoverSettings').checked = data.useCustomHoverSettings ?? true;
   document.getElementById('hoverWatchedTime').value = data.hoverWatchedTime || 30;
   document.getElementById('hoverWatchedProgress').value = data.hoverWatchedProgress || 50;
   
-  updateHoverSettingsVisibility();
+  updateSettingsVisibility();
 });
 
-// Toggle Hover-Einstellungen
-document.getElementById('useCustomHoverSettings').addEventListener('change', updateHoverSettingsVisibility);
+// Toggle Settings Visibility
+document.getElementById('useCustomShortsSettings').addEventListener('change', updateSettingsVisibility);
+document.getElementById('useCustomHoverSettings').addEventListener('change', updateSettingsVisibility);
 
-function updateHoverSettingsVisibility() {
-  const useCustom = document.getElementById('useCustomHoverSettings').checked;
-  document.getElementById('hoverSettings').style.display = useCustom ? 'block' : 'none';
+function updateSettingsVisibility() {
+  const shortsCustom = document.getElementById('useCustomShortsSettings').checked;
+  const hoverCustom = document.getElementById('useCustomHoverSettings').checked;
+  
+  document.getElementById('shortsSettings').style.display = shortsCustom ? 'block' : 'none';
+  document.getElementById('hoverSettings').style.display = hoverCustom ? 'block' : 'none';
 }
 
 // Speichere Einstellungen
 document.getElementById('saveSettings').addEventListener('click', () => {
-  const watchedTime = parseInt(document.getElementById('watchedTime').value);
-  const watchedProgress = parseInt(document.getElementById('watchedProgress').value);
-  const useCustomHoverSettings = document.getElementById('useCustomHoverSettings').checked;
-  const hoverWatchedTime = parseInt(document.getElementById('hoverWatchedTime').value);
-  const hoverWatchedProgress = parseInt(document.getElementById('hoverWatchedProgress').value);
+  const settings = {
+    // Normale Videos
+    watchedTime: parseInt(document.getElementById('watchedTime').value),
+    watchedProgress: parseInt(document.getElementById('watchedProgress').value),
+    
+    // Shorts
+    useCustomShortsSettings: document.getElementById('useCustomShortsSettings').checked,
+    shortsWatchedTime: parseInt(document.getElementById('shortsWatchedTime').value),
+    shortsWatchedProgress: parseInt(document.getElementById('shortsWatchedProgress').value),
+    
+    // Hover
+    useCustomHoverSettings: document.getElementById('useCustomHoverSettings').checked,
+    hoverWatchedTime: parseInt(document.getElementById('hoverWatchedTime').value),
+    hoverWatchedProgress: parseInt(document.getElementById('hoverWatchedProgress').value)
+  };
 
-  chrome.storage.local.set({
-    watchedTime,
-    watchedProgress,
-    useCustomHoverSettings,
-    hoverWatchedTime,
-    hoverWatchedProgress
-  }, () => {
+  chrome.storage.local.set(settings, () => {
     alert('Einstellungen gespeichert!');
   });
 });

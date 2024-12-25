@@ -124,26 +124,39 @@ function handleVideoPlayback(
     [
       "watchedTime",
       "watchedProgress",
+      "useCustomShortsSettings",
+      "shortsWatchedTime",
+      "shortsWatchedProgress",
       "useCustomHoverSettings",
       "hoverWatchedTime",
       "hoverWatchedProgress",
     ],
     (settings) => {
+      const useCustomShorts = settings.useCustomShortsSettings ?? true;
       const useCustomHover = settings.useCustomHoverSettings ?? true;
 
-      // Für Shorts andere Standardwerte verwenden
-      const defaultTime = isShort ? 15 : 30;
-      const defaultProgress = isShort ? 30 : 50;
+      // Standard-Werte
+      let defaultTime = 30;
+      let defaultProgress = 50;
 
+      // Anpassen basierend auf Video-Typ
+      if (isShort) {
+        if (useCustomShorts) {
+          defaultTime = settings.shortsWatchedTime || 15;
+          defaultProgress = settings.shortsWatchedProgress || 30;
+        }
+      }
+
+      // Hover-Einstellungen überschreiben wenn aktiviert
       const requiredTime =
         isHoverPreview && useCustomHover
           ? settings.hoverWatchedTime || defaultTime
-          : settings.watchedTime || defaultTime;
+          : defaultTime;
 
       const requiredProgress =
         isHoverPreview && useCustomHover
           ? settings.hoverWatchedProgress || defaultProgress
-          : settings.watchedProgress || defaultProgress;
+          : defaultProgress;
 
       const timeUpdateHandler = () => {
         const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
