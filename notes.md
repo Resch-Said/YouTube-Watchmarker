@@ -25,93 +25,34 @@
 
 #project-requirements #features #ui-design
 
-## Error Handling System
+## Performance Optimierung
 
-[Timestamp: 2024-01-19]
-**Priority: High**
-
-### Implementation Details
-
-- Created centralized error handling system using FehlerManifest.json
-- Structured error messages by categories:
-  - Storage errors
-  - Video-related errors
-  - General errors
-
-### Best Practices
-
-- Use consistent error message format
-- Centralize error messages for easier maintenance
-- Categories help with organization and debugging
-
-### TODOs
-
-- [ ] Implement error logging system
-- [ ] Add error tracking analytics
-- [ ] Create error handling utility functions
-
-### Tags
-
-#error-handling #maintenance #architecture
-
-## Fehlerbehandlung Update
-
-[Timestamp: 2024-03-19]
-**Priority: High**
-
-### FehlerManifest Implementation
-
-- Zentrale JSON-Datei für alle Fehlermeldungen
-- Kategorisierte Struktur:
-  - Extension Fehler
-  - Storage Fehler
-  - Video-bezogene Fehler
-- Version und Zeitstempel für Änderungsverfolgung
-
-### Verwendung
-
-```typescript
-import errors from "../public/FehlerManifest.json";
-// Beispiel: errors.storage.read
-```
-
-### Tags
-
-#error-handling #json #maintenance
-
-## FehlerManifest Update
-
-[Timestamp: 2024-03-19]
-**Priority: High**
-
-### Fehlerbehebung
-
-- JSON-Syntax-Fehler in FehlerManifest.json behoben
-- Struktur überarbeitet und vereinfacht
-- Deutsche Fehlermeldungen implementiert
-
-### Verwendungsbeispiel
-
-```typescript
-import fehler from "../public/FehlerManifest.json";
-console.error(fehler.storage.lesen);
-```
-
-### Tags
-
-#bugfix #error-handling #localization
-
-## Manifest Fehlerbehebung
-[Timestamp: 2024-03-19]
+[Timestamp: 2024-03-20]
 **Priority: High**
 
 ### Änderungen
-- manifest.json korrekt formatiert
-- JSON-Syntax-Fehler behoben
 
-### Best Practices
-- Manifest muss valides JSON sein
-- Keine Kommentare in JSON-Dateien
+- Einführung eines Cache-Systems für die Watch-History
+- Kürzere Pausen (10ms) zwischen DOM-Manipulationen
+- Vereinfachte Logik zur Markierung von Videos
+- Entfernung des Debouncing für schnellere Reaktionen
+- Zusätzlicher z-index für die Labels
+- Regelmäßige Aktualisierung alle 2 Sekunden
+- Bessere Fehlerbehandlung
 
 ### Tags
-#bugfix #manifest #configuration
+
+#performance #optimization #dom-manipulation #caching
+
+## Manifest-Anmerkung
+
+[Timestamp: 2024-03-20]
+**Priority: Medium**
+
+### Anmerkung
+
+- Keine Icons in die Manifest-Datei hinzufügen
+
+### Tags
+
+#manifest #configuration
