@@ -1,3 +1,5 @@
+import { StorageManager } from './storageManager.js';
+
 export function getVideoIdFromUrl(url) {
   try {
     // Handle shorts URLs
@@ -88,4 +90,52 @@ export function handleVideoPlayback(videoPlayer, videoId, videoType = 'standard'
       completed: state.progressChecked
     })
   };
+}
+
+export function createWatchedLabel() {
+  const label = document.createElement('div');
+  label.className = 'watched-label';
+  label.textContent = 'Watched';
+  label.style.cssText = `
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 2px;
+    font-size: 12px;
+    z-index: 1000;
+    pointer-events: none;
+  `;
+  return label;
+}
+
+export async function markVideoAsWatched(thumbnailElement) {
+  if (!thumbnailElement) return;
+  
+  try {
+    // Prüfe die UI-Einstellungen
+    const storage = new StorageManager();
+    const settings = await storage.getSettings();
+
+    // Füge Grayscale-Effekt hinzu wenn aktiviert
+    if (settings.ui.grayscale) {
+      thumbnailElement.classList.add('watched-thumbnail');
+    }
+
+    // Füge Watched-Label hinzu wenn aktiviert
+    if (settings.ui.labels) {
+      // Entferne existierendes Label falls vorhanden
+      const existingLabel = thumbnailElement.querySelector('.watched-label');
+      if (existingLabel) existingLabel.remove();
+      
+      // Füge neues Label hinzu
+      const label = createWatchedLabel();
+      thumbnailElement.style.position = 'relative';
+      thumbnailElement.appendChild(label);
+    }
+  } catch (error) {
+    console.error('Error in markVideoAsWatched:', error);
+  }
 }

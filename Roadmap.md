@@ -14,9 +14,9 @@
 
 ### Basis-UI
 
-- [x] Popup mit grundlegenden Einstellungen
-- [x] Grayscale-Effekt für gesehene Videos
-- [x] "Watched"-Label Anzeige
+- [✅] Popup mit grundlegenden Einstellungen
+- [✅] Grayscale-Effekt für gesehene Videos
+- [✅] "Watched"-Label Anzeige
 - [x] Datum-Label Anzeige
 
 ## Phase 2: Erweiterte Video-Typen 🎥

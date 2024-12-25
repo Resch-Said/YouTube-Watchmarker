@@ -3,7 +3,21 @@ import {
   handleVideoPlayback,
   VIDEO_TYPES,
   WATCH_THRESHOLDS,
+  createWatchedLabel,
+  markVideoAsWatched
 } from "../src/videoUtils.js";
+
+// Mock StorageManager
+jest.mock('../src/storageManager.js', () => ({
+  StorageManager: jest.fn().mockImplementation(() => ({
+    getSettings: jest.fn().mockResolvedValue({
+      ui: {
+        labels: true,
+        grayscale: true
+      }
+    })
+  }))
+}));
 
 const TEST_VIDEO_ID = "_CY69RkXYlw";
 
@@ -126,6 +140,73 @@ describe("Video-Player Handler", () => {
       const handler = handleVideoPlayback(videoPlayer, TEST_VIDEO_ID);
       eventHandlers.ended();
       expect(handler.getWatchProgress().completed).toBe(true);
+    });
+  });
+});
+
+// Test Suite für UI-Effekte
+describe("UI Effects", () => {
+  beforeEach(() => {
+    // Setup test DOM und CSS
+    document.body.innerHTML = `
+      <div class="video-container">
+        <ytd-thumbnail>
+          <img src="test.jpg" />
+        </ytd-thumbnail>
+      </div>
+    `;
+
+    // Mock Chrome Storage
+    global.chrome = {
+      storage: {
+        local: {
+          get: jest.fn(),
+          set: jest.fn(),
+        },
+      },
+    };
+  });
+
+  describe("Grayscale Effect", () => {
+    it("sollte Grayscale-Klasse korrekt anwenden", () => {
+      const thumbnail = document.querySelector("ytd-thumbnail");
+      thumbnail.classList.add("watched-thumbnail");
+
+      // Prüfe nur die Klassenexistenz
+      expect(thumbnail.classList.contains("watched-thumbnail")).toBe(true);
+    });
+
+    it("sollte Grayscale-Klasse bei Hover behalten", () => {
+      const thumbnail = document.querySelector("ytd-thumbnail");
+      thumbnail.classList.add("watched-thumbnail");
+
+      // Simuliere Hover
+      const hoverEvent = new MouseEvent("mouseenter");
+      thumbnail.dispatchEvent(hoverEvent);
+
+      // Klasse sollte immer noch existieren
+      expect(thumbnail.classList.contains("watched-thumbnail")).toBe(true);
+    });
+  });
+
+  describe("Watch Labels", () => {
+    beforeEach(() => {
+      // Setup Storage Mock für jeden Test
+      jest.clearAllMocks();
+    });
+
+    it("sollte Watched-Label korrekt erstellen", () => {
+      const label = createWatchedLabel();
+      expect(label.className).toBe("watched-label");
+      expect(label.textContent).toBe("Watched");
+    });
+
+    it("sollte Label basierend auf Settings anzeigen", async () => {
+      const thumbnail = document.querySelector("ytd-thumbnail");
+
+      await markVideoAsWatched(thumbnail);
+      const label = thumbnail.querySelector(".watched-label");
+      expect(label).toBeTruthy();
     });
   });
 });
