@@ -68,39 +68,44 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
 
   let progressChecked = false;
 
-  const timeUpdateHandler = () => {
-    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-    const timeWatched = videoPlayer.currentTime;
+  chrome.storage.local.get(["watchedTime", "watchedProgress"], (settings) => {
+    const requiredTime = settings.watchedTime || 30;
+    const requiredProgress = settings.watchedProgress || 50;
 
-    if (!isNaN(progress) && !isNaN(timeWatched)) {
-      console.log(
-        `[Watchmarker] Video-Fortschritt für ${videoId}:`,
-        `Zeit: ${timeWatched.toFixed(1)}s,`,
-        `Dauer: ${videoPlayer.duration.toFixed(1)}s,`,
-        `Fortschritt: ${progress.toFixed(1)}%`
-      );
+    const timeUpdateHandler = () => {
+      const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+      const timeWatched = videoPlayer.currentTime;
 
-      // Gleiche Bedingungen für alle Videos
-      const shouldMarkAsWatched = timeWatched > 30 || progress > 50;
-
-      if (!progressChecked && shouldMarkAsWatched) {
-        progressChecked = true;
+      if (!isNaN(progress) && !isNaN(timeWatched)) {
         console.log(
-          "[Watchmarker] Video als gesehen markiert:",
-          videoId,
-          isHoverPreview ? "(Hover-Preview)" : "(Normal)"
+          `[Watchmarker] Video-Fortschritt für ${videoId}:`,
+          `Zeit: ${timeWatched.toFixed(1)}s,`,
+          `Dauer: ${videoPlayer.duration.toFixed(1)}s,`,
+          `Fortschritt: ${progress.toFixed(1)}%`
         );
-        saveWatchHistory({
-          id: videoId,
-          date: new Date().toLocaleDateString(),
-        });
 
-        videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
+        const shouldMarkAsWatched =
+          timeWatched > requiredTime || progress > requiredProgress;
+
+        if (!progressChecked && shouldMarkAsWatched) {
+          progressChecked = true;
+          console.log(
+            "[Watchmarker] Video als gesehen markiert:",
+            videoId,
+            isHoverPreview ? "(Hover-Preview)" : "(Normal)"
+          );
+          saveWatchHistory({
+            id: videoId,
+            date: new Date().toLocaleDateString(),
+          });
+
+          videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
+        }
       }
-    }
-  };
+    };
 
-  videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
+    videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
+  });
 
   videoPlayer.addEventListener("ended", () => {
     if (!progressChecked) {

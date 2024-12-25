@@ -8,6 +8,17 @@
     body {
       font-family: Arial, sans-serif;
       padding: 10px;
+      min-width: 300px;
+    }
+    .settings-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin: 5px 0;
+    }
+    input[type="number"] {
+      width: 60px;
     }
     button {
       padding: 10px;
@@ -15,14 +26,36 @@
       color: white;
       border: none;
       cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
     }
     button:hover {
       background-color: #d32f2f;
+    }
+    #saveSettings {
+      background-color: #4CAF50;
+    }
+    #saveSettings:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
   <h1>YouTube Watchmarker</h1>
+  
+  <div class="settings-group">
+    <h2>Einstellungen</h2>
+    <label>
+      Zeit bis "Watched" (Sekunden):
+      <input type="number" id="watchedTime" min="1" max="600" value="30">
+    </label>
+    <label>
+      Fortschritt bis "Watched" (%):
+      <input type="number" id="watchedProgress" min="1" max="100" value="50">
+    </label>
+    <button id="saveSettings">Einstellungen speichern</button>
+  </div>
+
   <button id="clearWatchHistory">Watch-History leeren</button>
   <script src="popup.js"></script>
 </body>
