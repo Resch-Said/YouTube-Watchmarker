@@ -36,8 +36,8 @@ async function markWatchedVideos() {
         const watchedVideo = watchHistory.find((video) => video.id === videoId);
 
         if (watchedVideo && !videoElement.querySelector(".watched-label")) {
-          videoElement.style.filter = "grayscale(100%)";
-
+          videoElement.classList.add("watched-thumbnail");
+          
           const label = document.createElement("div");
           label.className = "watched-label";
           label.textContent = "Watched";

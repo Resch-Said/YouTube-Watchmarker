@@ -56,3 +56,24 @@
 ### Tags
 
 #manifest #configuration
+
+## Verbesserte Video-Erkennung und Speicherung
+
+[Timestamp: 2024-03-21]
+**Priority: High**
+
+### Änderungen
+
+- Videos werden nach 30 Sekunden oder 50% Fortschritt als gesehen markiert
+- Zusätzliches Logging für besseres Debugging
+- Separater Observer für den Video-Player
+- Verbesserte Erkennung der Videowiedergabe
+
+### Technische Details
+
+- `content.js` wurde aktualisiert, um die Video-Erkennung und Speicherung zu verbessern.
+- `background.js` wurde aktualisiert, um die Watch-History korrekt zu speichern.
+
+### Tags
+
+#video-detection #logging #performance #optimization

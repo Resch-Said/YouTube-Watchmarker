@@ -1,0 +1,7 @@
+.watched-thumbnail {
+  filter: grayscale(100%);
+}
+
+.watched-thumbnail:hover {
+  filter: none;
+}
