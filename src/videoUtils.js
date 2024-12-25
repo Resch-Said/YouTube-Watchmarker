@@ -215,3 +215,13 @@ async function markVideoAsWatched(thumbnailElement, watchDate = Date.now()) {
     console.error('[Watchmarker] Fehler beim Markieren:', error);
   }
 }
+
+export {
+  VIDEO_TYPES,
+  WATCH_THRESHOLDS,
+  getVideoIdFromUrl,
+  handleVideoPlayback,
+  createWatchedLabel, 
+  createDateLabel,
+  markVideoAsWatched
+};

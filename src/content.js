@@ -2,114 +2,179 @@ const storageModulePath = chrome.runtime.getURL("src/storageManager.js");
 const utilsModulePath = chrome.runtime.getURL("src/videoUtils.js");
 
 async function initializeContentScript() {
-  const { StorageManager } = await import(storageModulePath);
-  const utils = await import(utilsModulePath);
+  console.log("[Watchmarker] Starting initialization...");
+  
+  try {
+    const { StorageManager } = await import(storageModulePath);
+    console.log("[Watchmarker] StorageManager loaded");
+    
+    const utils = await import(utilsModulePath);
+    console.log("[Watchmarker] Utils loaded");
 
-  class ContentScript {
-    constructor() {
-      this.storageManager = new StorageManager();
-      this.activeVideos = new Map();
-      this.utils = utils;
-      console.log("[Watchmarker] Content Script initialized");
-      this.initObserver();
-      this.initMessageListener();
-    }
+    class ContentScript {
+      constructor() {
+        console.log("[Watchmarker] Creating ContentScript instance");
+        this.storageManager = new StorageManager();
+        this.activeVideos = new Map();
+        
+        // Explizite Zuweisung der benötigten Funktionen
+        const {
+          VIDEO_TYPES,
+          getVideoIdFromUrl,
+          handleVideoPlayback,
+          markVideoAsWatched
+        } = utils;
+        
+        this.getVideoIdFromUrl = getVideoIdFromUrl;
+        this.handleVideoPlayback = handleVideoPlayback;
+        this.markVideoAsWatched = markVideoAsWatched;
+        this.VIDEO_TYPES = VIDEO_TYPES;
+        
+        console.log("[Watchmarker] Content Script initialized");
+        
+        // Sofort nach Video suchen
+        const existingVideo = document.querySelector('video');
+        if (existingVideo) {
+          console.log("[Watchmarker] Found existing video element");
+          this.handleNewVideo(existingVideo);
+        }
+        
+        this.initObserver();
+        this.initMessageListener();
+        console.log("[Watchmarker] ContentScript initialization complete");
+      }
 
-    initObserver() {
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeName === "VIDEO") {
+      initObserver() {
+        const searchNodeForContent = (node) => {
+          // Sicherheitsprüfung für Node-Typ
+          if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+            return;
+          }
+
+          try {
+            // Prüfe den Node selbst
+            if (node instanceof HTMLVideoElement) {
               this.handleNewVideo(node);
             }
-            // Suche nach neuen Thumbnails
-            const thumbnails = node.querySelectorAll("ytd-thumbnail");
-            thumbnails.forEach((thumb) => this.processThumbnail(thumb));
+            
+            if (node instanceof HTMLElement) {
+              // Prüfe ob der Node selbst ein Thumbnail ist
+              if (node.matches("ytd-thumbnail")) {
+                this.processThumbnail(node);
+              }
+
+              // Suche nach Thumbnails innerhalb des Elements
+              const thumbnails = Array.from(node.getElementsByTagName("ytd-thumbnail"));
+              thumbnails.forEach(thumb => this.processThumbnail(thumb));
+            }
+          } catch (error) {
+            console.error("[Watchmarker] Error processing node:", error);
+          }
+        };
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            // Verarbeite hinzugefügte Nodes
+            mutation.addedNodes.forEach(searchNodeForContent);
+            
+            // Verarbeite auch den Target-Node selbst
+            searchNodeForContent(mutation.target);
           });
         });
-      });
 
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    async handleNewVideo(videoElement) {
-      const videoId = this.getVideoIdFromPage();
-      if (!videoId) {
-        console.log("[Watchmarker] Kein Video-ID gefunden");
-        return;
-      }
-
-      console.log(`[Watchmarker] Neues Video erkannt: ${videoId}`);
-      const videoType = window.location.pathname.includes("/shorts/")
-        ? this.utils.VIDEO_TYPES.SHORTS
-        : this.utils.VIDEO_TYPES.STANDARD;
-
-      const handler = this.utils.handleVideoPlayback(
-        videoElement,
-        videoId,
-        videoType
-      );
-      this.activeVideos.set(videoId, handler);
-
-      // Überprüfe regelmäßig den Fortschritt
-      setInterval(async () => {
-        const progress = handler.getWatchProgress();
-        console.log(`[Watchmarker] Video ${videoId} Fortschritt:`, {
-          accumulatedTime: progress.accumulatedTime,
-          completed: progress.completed,
+        // Starte Beobachtung
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
         });
+        
+        console.log("[Watchmarker] MutationObserver initialized");
+        
+        // Initial Scan der Seite
+        searchNodeForContent(document.body);
+      }
 
-        if (progress.completed) {
-          console.log(`[Watchmarker] Video ${videoId} als gesehen markiert`);
-          await this.storageManager.saveProgress(videoId, progress);
-          this.markThumbnailsAsWatched(videoId);
+      async handleNewVideo(videoElement) {
+        const videoId = this.getVideoIdFromPage();
+        if (!videoId) {
+          console.log("[Watchmarker] Kein Video-ID gefunden");
+          return;
         }
-      }, 1000);
-    }
 
-    async processThumbnail(thumbnail) {
-      const videoId = thumbnail.getAttribute("video-id");
-      if (!videoId) return;
+        console.log(`[Watchmarker] Neues Video erkannt: ${videoId}`);
+        const videoType = window.location.pathname.includes("/shorts/")
+          ? this.VIDEO_TYPES.SHORTS
+          : this.VIDEO_TYPES.STANDARD;
 
-      const progress = await this.storageManager.getVideoProgress(videoId);
-      if (progress?.completed) {
-        await this.utils.markVideoAsWatched(thumbnail, progress.watchedAt);
+        const handler = this.handleVideoPlayback(
+          videoElement,
+          videoId,
+          videoType
+        );
+        this.activeVideos.set(videoId, handler);
+
+        // Überprüfe regelmäßig den Fortschritt
+        setInterval(async () => {
+          const progress = handler.getWatchProgress();
+          console.log(`[Watchmarker] Video ${videoId} Fortschritt:`, {
+            accumulatedTime: progress.accumulatedTime,
+            completed: progress.completed,
+          });
+
+          if (progress.completed) {
+            console.log(`[Watchmarker] Video ${videoId} als gesehen markiert`);
+            await this.storageManager.saveProgress(videoId, progress);
+            this.markThumbnailsAsWatched(videoId);
+          }
+        }, 1000);
+      }
+
+      async processThumbnail(thumbnail) {
+        const videoId = thumbnail.getAttribute("video-id");
+        if (!videoId) return;
+
+        const progress = await this.storageManager.getVideoProgress(videoId);
+        if (progress?.completed) {
+          await this.markVideoAsWatched(thumbnail, progress.watchedAt);
+        }
+      }
+
+      getVideoIdFromPage() {
+        const url = window.location.href;
+        return this.getVideoIdFromUrl(url);
+      }
+
+      async markThumbnailsAsWatched(videoId) {
+        const thumbnails = document.querySelectorAll(
+          `ytd-thumbnail[video-id="${videoId}"]`
+        );
+        const watchDate = Date.now();
+
+        thumbnails.forEach(async (thumbnail) => {
+          await this.markVideoAsWatched(thumbnail, watchDate);
+        });
+      }
+
+      initMessageListener() {
+        chrome.runtime.onMessage.addListener((message) => {
+          if (message.type === "SETTINGS_UPDATED") {
+            // Aktualisiere alle sichtbaren Thumbnails
+            const thumbnails = document.querySelectorAll("ytd-thumbnail");
+            thumbnails.forEach((thumb) => this.processThumbnail(thumb));
+          }
+        });
       }
     }
 
-    getVideoIdFromPage() {
-      const url = window.location.href;
-      return this.utils.getVideoIdFromUrl(url);
-    }
-
-    async markThumbnailsAsWatched(videoId) {
-      const thumbnails = document.querySelectorAll(
-        `ytd-thumbnail[video-id="${videoId}"]`
-      );
-      const watchDate = Date.now();
-
-      thumbnails.forEach(async (thumbnail) => {
-        await this.utils.markVideoAsWatched(thumbnail, watchDate);
-      });
-    }
-
-    initMessageListener() {
-      chrome.runtime.onMessage.addListener((message) => {
-        if (message.type === "SETTINGS_UPDATED") {
-          // Aktualisiere alle sichtbaren Thumbnails
-          const thumbnails = document.querySelectorAll("ytd-thumbnail");
-          thumbnails.forEach((thumb) => this.processThumbnail(thumb));
-        }
-      });
-    }
+    console.log("[Watchmarker] Creating new ContentScript instance");
+    new ContentScript();
+  } catch (error) {
+    console.error("[Watchmarker] Initialization error:", error);
   }
-
-  // Starte Content Script
-  new ContentScript();
 }
 
-// Starte Initialisierung
-initializeContentScript().catch(console.error);
+// Starte Initialisierung und logge Fehler
+console.log("[Watchmarker] Content script file loaded");
+initializeContentScript().catch(error => {
+  console.error("[Watchmarker] Top-level initialization error:", error);
+});

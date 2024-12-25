@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS = {
   },
 };
 
-class StorageManager {
+export class StorageManager {
   constructor() {
     this.storage = chrome.storage.local;
   }

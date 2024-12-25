@@ -4,6 +4,36 @@
 **Notiz:** "percentMode" in den Default-Thresholds ergänzt und Tests entsprechend aktualisiert.
 **Priority: High**
 
+## Project Goals and Requirements
+- Mark watched YouTube videos
+- Track video progress and save it
+
+## Current Tasks and Progress
+- [x] Fix initialization and video detection issues
+- [x] Add debug logging for better traceability
+
+## Technical Decisions and Rationale
+- **Export Functions in `videoUtils.js`**: Ensure all utility functions are correctly exported to be used in `content.js`.
+- **Destructure Imports in `content.js`**: Explicitly destructure and assign utility functions to avoid `undefined` errors.
+
+## Problem Solutions and Workarounds
+- **TypeError: `this.utils.getVideoIdFromUrl` is not a function**: Fixed by correctly exporting and importing functions.
+
+## Best Practices Discovered
+- Use explicit destructuring for imports to avoid runtime errors.
+- Add debug logging to trace initialization and function calls.
+
+## Code Patterns and Architecture Decisions
+- Follow modular design by separating utility functions into `videoUtils.js`.
+- Use MutationObserver to dynamically detect and handle new video elements.
+
+## Important TODOs and Future Improvements
+- [ ] Optimize performance by reducing the frequency of progress checks.
+- [ ] Add more robust error handling and user notifications.
+
+## Timestamps
+- **2023-10-XX**: Fixed TypeError by updating exports and imports.
+
 ## Aktuelle Implementierung
 
 - Basis-Video-Tracking ✅
@@ -280,6 +310,8 @@
 
 ### Änderung
 - Mock-Definition für `StorageManager` in `content.test.js` wurde auf eine asynchrone Factory-Funktion umgestellt.
+- Hinzufügen von `dateFormat` zu den UI-Settings.
+- Erweiterung von `getVideoProgress` um ein vollständiges Progress-Objekt.
 
 ### Technische Details
 - `jest.mock` verwendet nun eine `async` Funktion, die ein ESM-kompatibles Mock-Objekt zurückgibt.
