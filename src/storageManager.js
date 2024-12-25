@@ -1,37 +1,37 @@
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
   WATCH_HISTORY: "watchHistory",
   SETTINGS: "settings",
 };
 
-export const DEFAULT_SETTINGS = {
+const DEFAULT_SETTINGS = {
   thresholds: {
     standard: {
       enabled: true,
       time: 30,
       percent: 50,
-      percentMode: 'position'
+      percentMode: "position",
     },
     shorts: {
       enabled: true,
       time: 15,
       percent: 30,
-      percentMode: 'position'
+      percentMode: "position",
     },
     hover: {
       enabled: true,
       time: 30,
       percent: 50,
-      percentMode: 'position'
-    }
+      percentMode: "position",
+    },
   },
   ui: {
     grayscale: true,
     labels: true,
-    dateFormat: "DD.MM.YYYY"
-  }
+    dateFormat: "DD.MM.YYYY",
+  },
 };
 
-export class StorageManager {
+class StorageManager {
   constructor() {
     this.storage = chrome.storage.local;
   }

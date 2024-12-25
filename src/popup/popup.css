@@ -88,18 +88,16 @@ button:hover {
 
 /* Grayscale-Effekt für gesehene Videos */
 .watched-thumbnail {
-  filter: grayscale(100%);
+  filter: grayscale(100%) !important;
   transition: filter 0.2s ease-in-out;
 }
 
 .watched-thumbnail:hover {
-  filter: grayscale(0%);
+  filter: grayscale(0%) !important;
 }
 
-.watched-label {
+.watched-label, .date-label {
   position: absolute;
-  top: 4px;
-  left: 4px;
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 2px 5px;
@@ -107,25 +105,20 @@ button:hover {
   font-size: 12px;
   z-index: 1000;
   pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
+}
+
+.watched-label {
+  top: 4px;
+  left: 4px;
+}
+
+.date-label {
+  top: 4px;
+  right: 4px;
 }
 
 .watched-thumbnail:hover .watched-label {
   opacity: 0.7;
-}
-
-.date-label {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 2px 5px;
-  border-radius: 2px;
-  font-size: 12px;
-  z-index: 1000;
-  pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
 }
 
 .watched-thumbnail:hover .date-label {

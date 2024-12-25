@@ -3,17 +3,22 @@
   "name": "YouTube Watchmarker",
   "version": "1.0.0",
   "description": "Markiert gesehene YouTube Videos",
-  "permissions": [
-    "storage"
-  ],
-  "host_permissions": [
-    "*://*.youtube.com/*"
-  ],
+  "permissions": ["storage"],
+  "host_permissions": ["*://*.youtube.com/*"],
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
       "js": ["src/content.js"],
       "css": ["src/popup/popup.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/storageManager.js",
+        "src/videoUtils.js"
+      ],
+      "matches": ["*://*.youtube.com/*"]
     }
   ],
   "action": {

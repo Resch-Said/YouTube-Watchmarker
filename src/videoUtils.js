@@ -1,6 +1,23 @@
-import { StorageManager } from './storageManager.js';
+// Entferne den Import
+// Entferne alle export statements
 
-export function getVideoIdFromUrl(url) {
+const VIDEO_TYPES = {
+  STANDARD: 'standard',
+  SHORTS: 'shorts'
+};
+
+const WATCH_THRESHOLDS = {
+  standard: {
+    time: 30,
+    percent: 50
+  },
+  shorts: {
+    time: 15,
+    percent: 30
+  }
+};
+
+function getVideoIdFromUrl(url) {
   try {
     // Handle shorts URLs
     if (url.includes('/shorts/')) {
@@ -30,23 +47,9 @@ export function getVideoIdFromUrl(url) {
   }
 }
 
-export const VIDEO_TYPES = {
-  STANDARD: 'standard',
-  SHORTS: 'shorts'
-};
-
-export const WATCH_THRESHOLDS = {
-  standard: {  // Geändert von STANDARD zu standard
-    time: 30,
-    percent: 50
-  },
-  shorts: {    // Geändert von SHORTS zu shorts
-    time: 15,
-    percent: 30
-  }
-};
-
-export function handleVideoPlayback(videoPlayer, videoId, videoType = 'standard') {
+function handleVideoPlayback(videoPlayer, videoId, videoType = 'standard') {
+  console.debug(`[Watchmarker] Starte Video-Tracking für ${videoId} (Typ: ${videoType})`);
+  
   const state = {
     startTime: Date.now(),
     accumulatedTime: 0,
@@ -55,44 +58,79 @@ export function handleVideoPlayback(videoPlayer, videoId, videoType = 'standard'
     watchThresholds: WATCH_THRESHOLDS[videoType]
   };
 
+  console.debug(`[Watchmarker] Schwellenwerte für ${videoType}:`, state.watchThresholds);
+
   const updateProgress = () => {
     const now = Date.now();
     const timeDiff = (now - state.lastUpdate) / 1000;
+    const previousTime = state.accumulatedTime;
     
-    // Simuliere Zeitaktualisierung für Tests
     if (videoPlayer.currentTime > 0) {
       state.accumulatedTime = videoPlayer.currentTime;
     }
     
     state.lastUpdate = now;
 
-    // Prüfe Schwellenwerte
+    // Debug-Logs für Progress-Updates
+    console.debug(`[Watchmarker] Progress Update für ${videoId}:`, {
+      currentTime: videoPlayer.currentTime,
+      duration: videoPlayer.duration,
+      accumulatedTime: state.accumulatedTime,
+      timeThreshold: state.watchThresholds.time,
+      percentThreshold: state.watchThresholds.percent
+    });
+
+    // Schwellenwert-Prüfung
     const timeThresholdMet = state.accumulatedTime >= state.watchThresholds.time;
-    const percentThresholdMet = videoPlayer.currentTime >= (videoPlayer.duration * state.watchThresholds.percent / 100);
+    const percentThresholdMet = videoPlayer.duration && 
+      (videoPlayer.currentTime >= (videoPlayer.duration * state.watchThresholds.percent / 100));
 
     if (timeThresholdMet || percentThresholdMet) {
+      if (!state.progressChecked) {
+        console.log(`[Watchmarker] Video ${videoId} hat Schwellenwert erreicht:`, {
+          timeThresholdMet,
+          percentThresholdMet,
+          currentTime: videoPlayer.currentTime,
+          duration: videoPlayer.duration
+        });
+      }
       state.progressChecked = true;
     }
   };
 
+  // Event-Listener für Debugging
+  videoPlayer.addEventListener('play', () => {
+    console.debug(`[Watchmarker] Video ${videoId} gestartet`);
+  });
+
+  videoPlayer.addEventListener('pause', () => {
+    console.debug(`[Watchmarker] Video ${videoId} pausiert bei ${videoPlayer.currentTime}s`);
+  });
+
   videoPlayer.addEventListener('timeupdate', updateProgress);
+  
   videoPlayer.addEventListener('ended', () => {
+    console.log(`[Watchmarker] Video ${videoId} beendet`);
     state.progressChecked = true;
   });
 
   return { 
     state,
-    getWatchProgress: () => ({
-      videoId,
-      type: videoType,
-      accumulatedTime: state.accumulatedTime,
-      watchedAt: state.startTime,
-      completed: state.progressChecked
-    })
+    getWatchProgress: () => {
+      const progress = {
+        videoId,
+        type: videoType,
+        accumulatedTime: state.accumulatedTime,
+        watchedAt: state.startTime,
+        completed: state.progressChecked
+      };
+      console.debug(`[Watchmarker] Aktueller Fortschritt für ${videoId}:`, progress);
+      return progress;
+    }
   };
 }
 
-export function createWatchedLabel() {
+function createWatchedLabel() {
   const label = document.createElement('div');
   label.className = 'watched-label';
   label.textContent = 'Watched';
@@ -111,7 +149,7 @@ export function createWatchedLabel() {
   return label;
 }
 
-export function createDateLabel(date) {
+function createDateLabel(date) {
   const label = document.createElement('div');
   label.className = 'date-label';
   
@@ -137,39 +175,43 @@ export function createDateLabel(date) {
   return label;
 }
 
-export async function markVideoAsWatched(thumbnailElement, watchDate = Date.now()) {
-  if (!thumbnailElement) return;
+async function markVideoAsWatched(thumbnailElement, watchDate = Date.now()) {
+  if (!thumbnailElement) {
+    console.log('[Watchmarker] Kein Thumbnail-Element zum Markieren gefunden');
+    return;
+  }
   
   try {
-    // Prüfe die UI-Einstellungen
     const storage = new StorageManager();
     const settings = await storage.getSettings();
+    console.log('[Watchmarker] Markiere Thumbnail mit Einstellungen:', settings);
 
-    // Füge Grayscale-Effekt hinzu wenn aktiviert
+    // Position für Labels sicherstellen
+    thumbnailElement.style.position = 'relative';
+
+    // Grayscale-Effekt
     if (settings.ui.grayscale) {
       thumbnailElement.classList.add('watched-thumbnail');
+      console.log('[Watchmarker] Grayscale-Effekt angewendet');
     }
 
-    // Füge Watched-Label hinzu wenn aktiviert
+    // Labels
     if (settings.ui.labels) {
-      // Entferne existierendes Label falls vorhanden
+      // Existierende Labels entfernen
       const existingWatchedLabel = thumbnailElement.querySelector('.watched-label');
-      if (existingWatchedLabel) existingWatchedLabel.remove();
-      
-      // Füge neues Label hinzu
-      const watchedLabel = createWatchedLabel();
-      thumbnailElement.appendChild(watchedLabel);
-
-      // Füge Datum Label hinzu
       const existingDateLabel = thumbnailElement.querySelector('.date-label');
+      if (existingWatchedLabel) existingWatchedLabel.remove();
       if (existingDateLabel) existingDateLabel.remove();
       
+      // Neue Labels hinzufügen
+      const watchedLabel = createWatchedLabel();
       const dateLabel = createDateLabel(watchDate);
+      thumbnailElement.appendChild(watchedLabel);
       thumbnailElement.appendChild(dateLabel);
+      console.log('[Watchmarker] Labels hinzugefügt');
     }
 
-    thumbnailElement.style.position = 'relative';
   } catch (error) {
-    console.error('Error in markVideoAsWatched:', error);
+    console.error('[Watchmarker] Fehler beim Markieren:', error);
   }
 }
