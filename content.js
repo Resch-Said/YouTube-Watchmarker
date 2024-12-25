@@ -66,14 +66,12 @@ async function markWatchedVideos() {
 function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
   if (!videoPlayer || !videoId) return;
 
-  // Entferne die Initialisierungsprüfung, da sie bei Hover-Previews Probleme verursacht
   let progressChecked = false;
 
   const timeUpdateHandler = () => {
     const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
     const timeWatched = videoPlayer.currentTime;
 
-    // Nur loggen wenn gültige Werte vorhanden sind
     if (!isNaN(progress) && !isNaN(timeWatched)) {
       console.log(
         `[Watchmarker] Video-Fortschritt für ${videoId}:`,
@@ -82,9 +80,8 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
         `Fortschritt: ${progress.toFixed(1)}%`
       );
 
-      const shouldMarkAsWatched = isHoverPreview
-        ? timeWatched > 3 || progress > 10 // 3 Sekunden oder 10% für Hover-Previews
-        : timeWatched > 30 || progress > 50; // Original-Bedingung für normale Videos
+      // Gleiche Bedingungen für alle Videos
+      const shouldMarkAsWatched = timeWatched > 30 || progress > 50;
 
       if (!progressChecked && shouldMarkAsWatched) {
         progressChecked = true;
@@ -98,7 +95,6 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
           date: new Date().toLocaleDateString(),
         });
 
-        // Entferne den Event-Listener nach dem Markieren
         videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
       }
     }
@@ -106,7 +102,6 @@ function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
 
   videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
 
-  // Zusätzlich noch das Ende überwachen
   videoPlayer.addEventListener("ended", () => {
     if (!progressChecked) {
       console.log("[Watchmarker] Video zu Ende geschaut:", videoId);

@@ -97,3 +97,28 @@
 ### Tags
 
 #hover-effect #ui-improvement #css
+
+## Video-Wiedergabe-Bedingungen Update
+
+[Timestamp: 2024-03-21]
+**Priority: High**
+
+### Änderungen
+
+- Einheitliche Bedingungen für alle Video-Typen:
+  - 30 Sekunden Wiedergabezeit ODER
+  - 50% des Videos angeschaut
+- Gilt für:
+  - Normale Video-Wiedergabe
+  - Hover-Preview-Wiedergabe
+- Verbesserte Fortschritts-Überwachung
+- Optimierte Event-Listener-Verwaltung
+
+### Begründung
+
+Die unterschiedlichen Bedingungen für Hover-Previews und normale Videos wurden vereinheitlicht,
+um ein konsistentes Nutzerverhalten zu gewährleisten und die Codebase zu vereinfachen.
+
+### Tags
+
+#video-playback #user-experience #code-simplification
