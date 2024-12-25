@@ -1,20 +1,20 @@
 {
   "manifest_version": 3,
   "name": "YouTube Watchmarker",
-  "version": "1.0",
-  "description": "Markiert alle gesehenen YouTube Videos und Shorts.",
-  "permissions": ["storage", "tabs", "activeTab", "scripting"],
-  "background": {
-    "service_worker": "background.js"
-  },
+  "version": "1.0.0",
+  "description": "Markiert gesehene YouTube Videos",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://www.youtube.com/*", "*://youtube.com/*"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["src/content.js"],
+      "css": ["src/styles.css"]
     }
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup/popup.html"
   }
 }

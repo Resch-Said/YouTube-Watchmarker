@@ -1,24 +1,33 @@
-let watchHistoryCache = null;
-let isProcessing = false;
-
-// Cache-Konstanten
-const CACHE_UPDATE_INTERVAL = 30000; // 30 Sekunden
-const PROCESS_INTERVAL = 3000; // 3 Sekunden
-const THROTTLE_DELAY = 1500; // 1.5 Sekunden
-const HOVER_CHECK_INTERVAL = 250; // 250ms
-
-let settings = {
-  watchedTime: 30,
-  watchedProgress: 50,
-  useCustomShortsSettings: true,
-  shortsWatchedTime: 15,
-  shortsWatchedProgress: 30,
-  useCustomHoverSettings: true,
-  hoverWatchedTime: 30,
-  hoverWatchedProgress: 50,
+// Konstanten
+const CONSTANTS = {
+  CACHE_UPDATE_INTERVAL: 30000,
+  PROCESS_INTERVAL: 3000,
+  THROTTLE_DELAY: 1500,
+  HOVER_CHECK_INTERVAL: 250,
 };
 
-// Lade Einstellungen beim Start und bei Änderungen
+// State Management
+const state = {
+  watchHistoryCache: null,
+  isProcessing: false,
+  settings: {
+    watchedTime: 30,
+    watchedProgress: 50,
+    useCustomShortsSettings: true,
+    shortsWatchedTime: 15,
+    shortsWatchedProgress: 30,
+    useCustomHoverSettings: true,
+    hoverWatchedTime: 30,
+    hoverWatchedProgress: 50,
+  },
+  processedVideos: new Set(),
+  processedHovers: new Set(),
+  hoverStates: new Map(),
+  activeHoverHandlers: new Map(),
+  currentShortsId: null,
+};
+
+// Settings Management
 function loadSettings() {
   chrome.storage.local.get(
     [
@@ -32,7 +41,7 @@ function loadSettings() {
       "hoverWatchedProgress",
     ],
     (data) => {
-      settings = {
+      state.settings = {
         watchedTime: data.watchedTime || 30,
         watchedProgress: data.watchedProgress || 50,
         useCustomShortsSettings: data.useCustomShortsSettings ?? true,
@@ -46,106 +55,7 @@ function loadSettings() {
   );
 }
 
-// Initialer Load der Einstellungen
-loadSettings();
-
-// Höre auf Settings-Updates
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "SETTINGS_UPDATED") {
-    loadSettings();
-  }
-});
-
-async function getWatchHistory() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get("watchHistory", (data) => {
-      watchHistoryCache = data.watchHistory || [];
-      resolve(watchHistoryCache);
-    });
-  });
-}
-
-function saveWatchHistory(video) {
-  chrome.runtime.sendMessage(
-    { type: "SAVE_WATCH_HISTORY", video },
-    (response) => {
-      if (response.status === "success") {
-        console.log("[Watchmarker] Video saved to watch history");
-      } else if (response.status === "exists") {
-        console.log("[Watchmarker] Video already in watch history");
-      }
-    }
-  );
-}
-
-// Optimiertes Video-Tracking
-const processedVideos = new Set();
-const processedHovers = new Set();
-
-async function markWatchedVideos() {
-  if (isProcessing) return;
-  isProcessing = true;
-
-  const watchHistory = await getWatchHistory();
-  const videoElements = document.querySelectorAll(
-    "ytd-thumbnail:not([data-watchmarker-processed]), ytd-rich-item-renderer[is-slim-media]:not([data-watchmarker-processed])"
-  );
-
-  for (const videoElement of videoElements) {
-    const videoLink = videoElement.querySelector(
-      "a[href*='/watch?v='], a[href*='/shorts/']"
-    );
-    if (!videoLink) continue;
-
-    try {
-      const videoId = getVideoIdFromUrl(videoLink.href);
-      if (!videoId || processedVideos.has(videoId)) continue;
-
-      processedVideos.add(videoId);
-      videoElement.dataset.watchmarkerProcessed = "true";
-
-      const watchedVideo = watchHistory.find((video) => video.id === videoId);
-      if (!watchedVideo) continue;
-
-      const isShort = videoLink.href.includes("/shorts/");
-
-      // Bestimme das korrekte Container-Element für die Labels
-      const labelContainer = isShort
-        ? videoElement.querySelector(
-            ".shortsLockupViewModelHostThumbnailContainer"
-          )
-        : videoElement;
-
-      if (watchedVideo && !labelContainer.querySelector(".watched-label")) {
-        labelContainer.classList.add("watched-thumbnail");
-
-        const label = document.createElement("div");
-        label.className = "watched-label";
-        label.textContent = "Watched";
-        label.style.cssText =
-          "position:absolute;top:4px;left:4px;background-color:rgba(0,0,0,0.7);color:white;padding:2px 5px;z-index:1000;pointer-events:none;";
-        labelContainer.appendChild(label);
-
-        const dateLabel = document.createElement("div");
-        dateLabel.textContent = watchedVideo.date;
-        dateLabel.style.cssText =
-          "position:absolute;top:4px;right:4px;background-color:rgba(0,0,0,0.7);color:white;padding:2px 5px;z-index:1000;pointer-events:none;";
-        labelContainer.appendChild(dateLabel);
-
-        console.log(
-          "[Watchmarker] Markiere als gesehen:",
-          isShort ? "Short" : "Video",
-          videoId
-        );
-      }
-    } catch (error) {
-      console.error("[Watchmarker] Error processing video:", error);
-    }
-  }
-
-  isProcessing = false;
-}
-
+// Video ID Extraction
 function getVideoIdFromUrl(url) {
   try {
     // Für relative URLs (Shorts)
@@ -165,6 +75,7 @@ function getVideoIdFromUrl(url) {
   }
 }
 
+// Video Type Detection
 function getVideoType(isHoverPreview, isShort) {
   if (isShort) {
     return isHoverPreview ? "Shorts-Hover" : "Shorts";
@@ -172,278 +83,255 @@ function getVideoType(isHoverPreview, isShort) {
   return isHoverPreview ? "Hover" : "Normal";
 }
 
+// Threshold Management
+function getThresholds(isShorts, isHover) {
+  if (isHover) {
+    if (!state.settings.useCustomHoverSettings) {
+      return {
+        time: state.settings.watchedTime,
+        progress: state.settings.watchedProgress,
+      };
+    }
+    return {
+      time: state.settings.hoverWatchedTime,
+      progress: state.settings.hoverWatchedProgress,
+    };
+  }
+
+  if (isShorts) {
+    if (!state.settings.useCustomShortsSettings) {
+      return {
+        time: state.settings.watchedTime,
+        progress: state.settings.watchedProgress,
+      };
+    }
+    return {
+      time: state.settings.shortsWatchedTime,
+      progress: state.settings.shortsWatchedProgress,
+    };
+  }
+
+  return {
+    time: state.settings.watchedTime,
+    progress: state.settings.watchedProgress,
+  };
+}
+
+// Video Playback Handling
 function handleVideoPlayback(
   videoPlayer,
   videoId,
   isHoverPreview = false,
   isShort = false
 ) {
-  if (!videoPlayer || !videoId) return;
+  if (!videoPlayer || !videoId) return null;
 
-  let progressChecked = false;
+  const state = isHoverPreview
+    ? getOrCreateHoverState(videoId)
+    : {
+        progressChecked: false,
+        accumulatedTime: 0,
+        lastTimeUpdate: Date.now(),
+        active: true,
+      };
+
+  state.active = true;
 
   const timeUpdateHandler = () => {
-    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-    const timeWatched = videoPlayer.currentTime;
+    if (!state.active) return;
 
-    if (!isNaN(progress) && !isNaN(timeWatched)) {
+    const currentTime = Date.now();
+    const deltaTime = (currentTime - state.lastTimeUpdate) / 1000;
+    state.lastTimeUpdate = currentTime;
+
+    if (!videoPlayer.paused && !isNaN(deltaTime)) {
+      state.accumulatedTime += deltaTime;
+    }
+
+    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+
+    if (!isNaN(progress) && !isNaN(state.accumulatedTime)) {
       const videoType = getVideoType(isHoverPreview, isShort);
       const thresholds = getThresholds(isShort, isHoverPreview);
+
+      // Verbessertes Logging
       console.log(
         `[Watchmarker] ${videoType}:`,
-        `${timeWatched.toFixed(1)}s/${videoPlayer.duration.toFixed(1)}s`,
+        `Akkumuliert: ${state.accumulatedTime.toFixed(1)}s`,
+        `Aktuell: ${videoPlayer.currentTime.toFixed(
+          1
+        )}s/${videoPlayer.duration.toFixed(1)}s`,
         `(${progress.toFixed(1)}%)`,
         `Ziel: ${thresholds.time}s/${thresholds.progress}%`
       );
 
-      const shouldMarkAsWatched = checkWatchThresholds(
-        timeWatched,
-        videoPlayer.duration,
-        isShort,
-        isHoverPreview
-      );
-
-      if (!progressChecked && shouldMarkAsWatched) {
-        progressChecked = true;
+      if (
+        !state.progressChecked &&
+        (state.accumulatedTime >= thresholds.time ||
+          progress >= thresholds.progress)
+      ) {
+        state.progressChecked = true;
         saveWatchHistory({
           id: videoId,
           date: new Date().toLocaleDateString(),
         });
-
-        videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
+        cleanup();
       }
     }
   };
 
-  videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
+  const cleanup = () => {
+    if (!state.active) return;
+    state.active = false;
+    videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
+    videoPlayer.removeEventListener("ended", onEnded);
+    if (isHoverPreview) {
+      videoPlayer.removeEventListener("mouseleave", cleanup);
+      // Nicht den State aus hoverStates entfernen, nur deaktivieren
+    }
+    console.log("[Watchmarker] Cleanup für Video:", videoId);
+  };
 
-  videoPlayer.addEventListener("ended", () => {
-    if (!progressChecked) {
-      console.log("[Watchmarker] Video zu Ende geschaut:", videoId);
+  const onEnded = () => {
+    if (!state.progressChecked) {
       saveWatchHistory({
         id: videoId,
         date: new Date().toLocaleDateString(),
       });
     }
-  });
-}
-
-// Hilfsfunktion um die korrekten Schwellenwerte basierend auf dem Videotyp zu erhalten
-function getThresholds(isShorts, isHover) {
-  if (isHover) {
-    if (!settings.useCustomHoverSettings) {
-      return {
-        time: settings.watchedTime,
-        progress: settings.watchedProgress,
-      };
-    }
-    return {
-      time: settings.hoverWatchedTime,
-      progress: settings.hoverWatchedProgress,
-    };
-  }
-
-  if (isShorts) {
-    if (!settings.useCustomShortsSettings) {
-      return {
-        time: settings.watchedTime,
-        progress: settings.watchedProgress,
-      };
-    }
-    return {
-      time: settings.shortsWatchedTime,
-      progress: settings.shortsWatchedProgress,
-    };
-  }
-
-  return {
-    time: settings.watchedTime,
-    progress: settings.watchedProgress,
+    cleanup();
   };
+
+  videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
+  videoPlayer.addEventListener("ended", onEnded);
+
+  if (isHoverPreview) {
+    videoPlayer.addEventListener("mouseleave", cleanup);
+  }
+
+  return { cleanup, videoId, state };
 }
 
-// Verwende diese Funktion für die Schwellenwert-Überprüfung
-function checkWatchThresholds(currentTime, duration, isShorts, isHover) {
-  const thresholds = getThresholds(isShorts, isHover);
-  const progress = (currentTime / duration) * 100;
+// DOM Manipulation
+const domUtils = {
+  createWatchedLabel(text) {
+    const label = document.createElement("div");
+    label.className = "watched-label";
+    label.textContent = text;
+    label.style.cssText =
+      "position:absolute;top:4px;left:4px;background-color:rgba(0,0,0,0.7);color:white;padding:2px 5px;z-index:1000;pointer-events:none;";
+    return label;
+  },
 
-  return currentTime >= thresholds.time || progress >= thresholds.progress;
-}
-
-// Verbesserte Video-Erkennung
-function checkForVideoPlayers() {
-  const videoPlayers = document.querySelectorAll("video");
-  videoPlayers.forEach((videoPlayer) => {
-    const isShort = window.location.pathname.includes("/shorts/");
-    const videoId = isShort
-      ? window.location.pathname.split("/shorts/")[1]
-      : new URL(window.location.href).searchParams.get("v");
-
-    if (videoId) {
-      console.log(
-        "[Watchmarker] Video erkannt:",
-        isShort ? "Short" : "Normal",
-        videoId
-      );
-      handleVideoPlayback(videoPlayer, videoId, false, isShort);
-    }
-  });
-}
-
-// Optimierte Hover-Erkennung
-function checkForHoverPlayback() {
-  const thumbnails = document.querySelectorAll(
-    "ytd-thumbnail:not([data-watchmarker-hover]), ytd-reel-item-renderer:not([data-watchmarker-hover])"
-  );
-
-  thumbnails.forEach((thumbnail) => {
-    thumbnail.dataset.watchmarkerHover = "true";
-
-    thumbnail.addEventListener(
-      "mouseover",
-      () => {
-        const videoLink = thumbnail.querySelector("a");
-        if (!videoLink) return;
-
-        const videoId = getVideoIdFromUrl(videoLink.href);
-        if (!videoId || processedHovers.has(videoId)) return;
-
-        const isShort = videoLink.href.includes("/shorts/");
-        let checkCount = 0;
-        const checkInterval = setInterval(() => {
-          const previewContainer = document.querySelector(
-            "ytd-video-preview[active]"
-          );
-          const hoverPlayer = previewContainer?.querySelector("video");
-
-          if (hoverPlayer) {
-            clearInterval(checkInterval);
-            processedHovers.add(videoId);
-            handleVideoPlayback(hoverPlayer, videoId, true, isShort);
-          } else if (++checkCount > 5) {
-            // Reduzierte Anzahl der Versuche
-            clearInterval(checkInterval);
-          }
-        }, HOVER_CHECK_INTERVAL);
-      },
-      { passive: true }
-    ); // Optimierung für Event-Listener
-  });
-}
-
-// Optimierte Observer
-const observerOptions = {
-  childList: true,
-  subtree: true,
-  attributes: false, // Ignoriere Attributänderungen
-  characterData: false, // Ignoriere Textänderungen
+  createDateLabel(date) {
+    const label = document.createElement("div");
+    label.textContent = date;
+    label.style.cssText =
+      "position:absolute;top:4px;right:4px;background-color:rgba(0,0,0,0.7);color:white;padding:2px 5px;z-index:1000;pointer-events:none;";
+    return label;
+  },
 };
 
-// Effizienteres Throttling
-function throttle(func, delay) {
-  let lastCall = 0;
-  return function (...args) {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      func.apply(this, args);
-      lastCall = now;
+// Hover Management
+function setupHoverTracking() {
+  // Vereinfachte Hover-Logik
+  function handleHover(thumbnail) {
+    const videoLink = thumbnail.querySelector("a");
+    if (!videoLink) return;
+
+    const videoId = getVideoIdFromUrl(videoLink.href);
+    if (!videoId) return;
+
+    const isShort = videoLink.href.includes("/shorts/");
+
+    function attachToPlayer(hoverPlayer) {
+      if (!hoverPlayer?.src) return false;
+
+      const handler = handleVideoPlayback(hoverPlayer, videoId, true, isShort);
+      state.activeHoverHandlers.set(videoId, handler);
+      return true;
     }
-  };
-}
 
-const throttledMarkVideos = throttle(markWatchedVideos, THROTTLE_DELAY);
-const throttledCheckHover = throttle(checkForHoverPlayback, THROTTLE_DELAY);
-
-// Observer mit optimierten Optionen
-const observer = new MutationObserver(throttledMarkVideos);
-const hoverObserver = new MutationObserver(throttledCheckHover);
-
-observer.observe(document.body, observerOptions);
-hoverObserver.observe(document.body, observerOptions);
-
-// Cache regelmäßig leeren
-setInterval(() => {
-  processedVideos.clear();
-  processedHovers.clear();
-  watchHistoryCache = null;
-}, CACHE_UPDATE_INTERVAL);
-
-// Optimierte Aktualisierungsintervalle
-setInterval(markWatchedVideos, PROCESS_INTERVAL);
-setInterval(checkForHoverPlayback, PROCESS_INTERVAL);
-
-// Initialer Check
-markWatchedVideos();
-checkForVideoPlayers();
-checkForHoverPlayback();
-
-// Shorts-spezifische Funktionen
-let currentShortsId = null;
-
-function handleShortsNavigation() {
-  const shortsPlayer = document.querySelector("video[src]");
-  if (!shortsPlayer) return;
-
-  const newShortsId = window.location.pathname.split("/shorts/")[1];
-  if (newShortsId && newShortsId !== currentShortsId) {
-    currentShortsId = newShortsId;
-    console.log("[Watchmarker] Neues Short erkannt:", newShortsId);
-    handleVideoPlayback(shortsPlayer, newShortsId, false, true);
-  }
-}
-
-// URL-Änderungen in Shorts erkennen
-function watchShortsNavigation() {
-  let lastUrl = location.href;
-
-  // Beobachte URL-Änderungen
-  const urlObserver = new MutationObserver(() => {
-    if (location.href !== lastUrl) {
-      lastUrl = location.href;
-      if (location.pathname.includes("/shorts/")) {
-        handleShortsNavigation();
+    const cleanup = () => {
+      const handler = state.activeHoverHandlers.get(videoId);
+      if (handler) {
+        handler.cleanup();
+        state.activeHoverHandlers.delete(videoId);
       }
+    };
+
+    thumbnail.addEventListener("mouseleave", cleanup, { once: true });
+
+    // Check for hover preview
+    const checkInterval = setInterval(() => {
+      const player = document.querySelector("ytd-video-preview[active] video");
+      if (attachToPlayer(player) || ++checkCount > 5) {
+        clearInterval(checkInterval);
+      }
+    }, CONSTANTS.HOVER_CHECK_INTERVAL);
+  }
+
+  // Attach hover listeners
+  const observer = new MutationObserver(
+    throttle(() => {
+      document
+        .querySelectorAll(
+          "ytd-thumbnail:not([data-watchmarker-hover]), ytd-reel-item-renderer:not([data-watchmarker-hover])"
+        )
+        .forEach((thumbnail) => {
+          thumbnail.dataset.watchmarkerHover = "true";
+          thumbnail.addEventListener(
+            "mouseover",
+            () => handleHover(thumbnail),
+            { passive: true }
+          );
+        });
+    }, CONSTANTS.THROTTLE_DELAY)
+  );
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Message Handling
+function setupMessageHandling() {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    switch (message.type) {
+      case "SETTINGS_UPDATED":
+        loadSettings();
+        break;
+      case "REFRESH_MARKERS":
+      case "IMPORT_SUCCESS":
+        removeAllMarkers();
+        markWatchedVideos();
+        break;
+      case "CLEAR_HISTORY":
+        removeAllMarkers();
+        break;
+      case "VIDEO_WATCHED":
+        markVideoAsWatched(message.videoId);
+        break;
     }
-  });
-
-  // Beobachte Änderungen am Title-Element (YouTube ändert dies bei Shorts-Navigation)
-  urlObserver.observe(document.querySelector("title"), {
-    subtree: true,
-    characterData: true,
-    childList: true,
-  });
-
-  // Beobachte Shorts-Container für dynamische Updates
-  const shortsObserver = new MutationObserver((mutations) => {
-    if (location.pathname.includes("/shorts/")) {
-      handleShortsNavigation();
-    }
-  });
-
-  // Beobachte den Shorts-Container
-  shortsObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
   });
 }
 
-// Initialisiere Shorts-Beobachtung
-watchShortsNavigation();
+// Initialization
+function init() {
+  loadSettings();
+  setupMessageHandling();
+  setupHoverTracking();
 
-// Listener für Import-Aktualisierung
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "REFRESH_MARKERS") {
-    // Cache leeren
-    processedVideos.clear();
-    processedHovers.clear();
+  // Initial checks
+  markWatchedVideos();
+  checkForVideoPlayers();
 
-    // Alle Markierungen entfernen
-    document.querySelectorAll("[data-watchmarker-processed]").forEach((el) => {
-      el.removeAttribute("data-watchmarker-processed");
-    });
+  // Setup intervals
+  setInterval(markWatchedVideos, CONSTANTS.PROCESS_INTERVAL);
+  setInterval(() => {
+    state.processedVideos.clear();
+    state.processedHovers.clear();
+    state.watchHistoryCache = null;
+  }, CONSTANTS.CACHE_UPDATE_INTERVAL);
+}
 
-    // Sofortige Neuverarbeitung starten
-    processVideos();
-    currentShortsId = null; // Reset Shorts tracking
-  }
-});
+// Start the extension
+init();

@@ -1,0 +1,87 @@
+body {
+  width: 320px;
+  margin: 0;
+  padding: 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  color: #030303;
+}
+
+h2 {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  color: #606060;
+}
+
+.settings-group {
+  background: #f8f8f8;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.setting {
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+label {
+  font-size: 14px;
+  color: #030303;
+}
+
+input[type="number"] {
+  width: 60px;
+  padding: 4px;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+}
+
+select {
+  padding: 4px;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  min-width: 150px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#save {
+  background: #065fd4;
+  color: white;
+}
+
+#reset {
+  background: #f2f2f2;
+  color: #606060;
+}
+
+button:hover {
+  opacity: 0.9;
+}

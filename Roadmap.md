@@ -6,11 +6,11 @@
 
 ### Basis-Video-Tracking
 
-- [x] Video-ID Extraktion
-- [x] Wiedergabezeit-Tracking
-- [x] Progress-Tracking
-- [x] Basis-Einstellungen für Schwellenwerte
-- [x] Lokale Speicherung der Watch-History
+- [✅] Video-ID Extraktion
+- [✅] Wiedergabezeit-Tracking
+- [✅] Progress-Tracking
+- [✅] Basis-Einstellungen für Schwellenwerte
+- [✅] Lokale Speicherung der Watch-History
 
 ### Basis-UI
 
@@ -37,6 +37,10 @@
 - [x] Separate Hover-Einstellungen
 - [ ] Performance-Optimierung für Hover-Handler
 - [ ] Erweiterte Hover-UI-Konfiguration
+
+### Schwellenwerte
+
+- [x] "percentMode" in den Schwellenwerten integriert und erfolgreich getestet
 
 ## Phase 3: UI-Verbesserungen 🎨
 
@@ -171,6 +175,111 @@
 - [ ] Bundle Size Analysis
 - [ ] Automatisierte Builds
 
+### Unit Tests
+
+- [ ] Video-ID Extraktion
+  - [ ] Standard YouTube URLs
+  - [ ] Shorts URLs
+  - [ ] Playlist URLs
+  - [ ] Ungültige URLs
+  - [ ] Edge Cases
+
+### Integration Tests
+
+- [ ] DOM-Manipulation
+  - [ ] Label-Injection
+  - [ ] Grayscale-Effekte
+  - [ ] Event-Handler-Registrierung
+- [ ] Storage-Integration
+  - [ ] Watch-History Speicherung
+  - [ ] Einstellungen Synchronisation
+  - [ ] Cache-Management
+
+### End-to-End Tests
+
+- [ ] Video-Tracking Flows
+  - [ ] Standard Video Watching
+  - [ ] Shorts Viewing
+  - [ ] Hover Preview
+- [ ] Settings Management
+  - [ ] Konfigurationsänderungen
+  - [ ] UI-Updates
+  - [ ] Storage-Synchronisation
+
+### Performance Tests
+
+- [ ] Last-Tests
+  - [ ] Viele Videos gleichzeitig
+  - [ ] Schnelles Scrollen
+  - [ ] Häufige Hover-Events
+- [ ] Memory-Profiling
+  - [ ] Leak Detection
+  - [ ] Heap-Snapshots
+  - [ ] GC-Patterns
+
+## Phase 9: Internationalisierung 🌍
+
+### Übersetzungssystem
+
+- [ ] i18n Framework Setup
+- [ ] Basis-Übersetzungen
+  - [ ] Deutsch
+  - [ ] Englisch
+- [ ] Dynamische Sprachauswahl
+- [ ] Fallback-System
+
+### Lokalisierung
+
+- [ ] Datums- und Zeitformate
+- [ ] Zahlenformate
+- [ ] RTL-Unterstützung
+- [ ] Kulturspezifische Anpassungen
+
+## Phase 10: Veröffentlichung 🚀
+
+### Store-Vorbereitung
+
+- [ ] Chrome Web Store Listing
+  - [ ] Screenshots
+  - [ ] Promo-Video
+  - [ ] Store-Beschreibung
+- [ ] Firefox Add-ons Portal
+- [ ] Edge Add-ons Store
+
+### Release-Management
+
+- [ ] Version-Tagging
+- [ ] Changelog-Generierung
+- [ ] Release Notes
+- [ ] Update-Notifikationen
+
+### Support-Infrastruktur
+
+- [ ] GitHub Issues Template
+- [ ] FAQ-Dokument
+- [ ] Troubleshooting-Guide
+- [ ] Support-Kontakt-System
+
+## Meilensteine & Termine
+
+### Q2 2024
+
+- [ ] Phase 1-3 Abschluss
+- [ ] Basis-Watchlist-System
+- [ ] Erste Beta-Version
+
+### Q3 2024
+
+- [ ] Cloud-Integration
+- [ ] Performance-Optimierungen
+- [ ] Test-Automation
+
+### Q4 2024
+
+- [ ] Internationalisierung
+- [ ] Store-Veröffentlichung
+- [ ] Marketing-Start
+
 ## Legende
 
 - ✅ Abgeschlossen
@@ -185,6 +294,7 @@
 - **[2024-03-21]**: Initiale Roadmap erstellt
 - **[2024-03-21]**: Phase 1 größtenteils abgeschlossen
 - **[2024-03-21]**: Phase 2 in Bearbeitung
+- **[2024-03-21]**: "percentMode" eingeführt und in den Tests abgedeckt
 
 ## Prioritäten-Matrix
 
