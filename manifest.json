@@ -3,7 +3,7 @@
   "name": "YouTube Watchmarker",
   "version": "1.0",
   "description": "Markiert alle gesehenen YouTube Videos und Shorts.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "tabs", "activeTab", "scripting"],
   "background": {
     "service_worker": "background.js"
   },

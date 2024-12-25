@@ -320,3 +320,20 @@ setInterval(checkForHoverPlayback, PROCESS_INTERVAL);
 markWatchedVideos();
 checkForVideoPlayers();
 checkForHoverPlayback();
+
+// Listener für Import-Aktualisierung
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'REFRESH_MARKERS') {
+    // Cache leeren
+    processedVideos.clear();
+    processedHovers.clear();
+    
+    // Alle Markierungen entfernen
+    document.querySelectorAll('[data-watchmarker-processed]').forEach(el => {
+      el.removeAttribute('data-watchmarker-processed');
+    });
+    
+    // Sofortige Neuverarbeitung starten
+    processVideos();
+  }
+});

@@ -132,7 +132,16 @@
       <button id="saveSettings">Einstellungen speichern</button>
     </div>
 
-    <button id="clearWatchHistory">Watch-History leeren</button>
+    <div class="settings-group">
+      <h2>Daten-Management</h2>
+      <button id="exportData">Einstellungen & History exportieren</button>
+      <div class="import-section">
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+        <button id="importData">Daten importieren</button>
+      </div>
+      <button id="clearWatchHistory">Watch-History leeren</button>
+    </div>
+
     <script src="popup.js"></script>
   </body>
 </html>
