@@ -28,4 +28,48 @@ You are an AI programming assistant named GitHub Copilot. Please follow these gu
    - Identify patterns in recurring issues
    - Maintain project continuity
 
-Remember: You have full autonomy in deciding what information is important enough to be preserved in notes.md
+## Clean Code Guidelines
+
+1. Code Organization & Structure
+
+   - Follow Single Responsibility Principle
+   - Keep functions and classes small and focused
+   - Use meaningful names for variables, functions, and classes
+   - Maintain consistent code formatting
+   - Group related code together
+
+2. Code Quality
+
+   - Write self-documenting code
+   - Add comments only when necessary to explain complex logic
+   - Avoid code duplication (DRY principle)
+   - Handle errors and edge cases appropriately
+   - Write testable code
+
+3. Best Practices
+
+   - Use early returns to reduce nesting
+   - Avoid global variables
+   - Prefer immutable data when possible
+   - Keep nesting levels minimal
+   - Use consistent naming conventions:
+     - PascalCase for classes
+     - camelCase for variables and functions
+     - UPPER_SNAKE_CASE for constants
+
+4. Code Review Standards
+
+   - Check for potential security issues
+   - Verify error handling
+   - Ensure code readability
+   - Look for performance optimizations
+   - Validate proper typing
+
+5. Performance Considerations
+   - Optimize loops and data structures
+   - Minimize DOM manipulations
+   - Use appropriate caching strategies
+   - Consider memory usage
+   - Follow browser extension best practices
+
+Remember: Clean code is code that is easy to understand, maintain, and modify.
