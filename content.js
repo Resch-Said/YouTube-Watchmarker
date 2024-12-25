@@ -16,6 +16,8 @@ function saveWatchHistory(video) {
     (response) => {
       if (response.status === "success") {
         console.log("[Watchmarker] Video saved to watch history");
+      } else if (response.status === "exists") {
+        console.log("[Watchmarker] Video already in watch history");
       }
     }
   );
@@ -37,7 +39,7 @@ async function markWatchedVideos() {
 
         if (watchedVideo && !videoElement.querySelector(".watched-label")) {
           videoElement.classList.add("watched-thumbnail");
-          
+
           const label = document.createElement("div");
           label.className = "watched-label";
           label.textContent = "Watched";
@@ -61,55 +63,128 @@ async function markWatchedVideos() {
   isProcessing = false;
 }
 
-function handleVideoPlayback() {
-  const videoPlayer = document.querySelector("video");
-  if (videoPlayer && !videoPlayer.dataset.watchmarkerInitialized) {
-    videoPlayer.dataset.watchmarkerInitialized = "true";
-    
-    // Video als gesehen markieren nach 30 Sekunden oder 50% Fortschritt
-    let progressChecked = false;
-    
-    videoPlayer.addEventListener("timeupdate", () => {
-      if (!progressChecked) {
-        const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-        const timeWatched = videoPlayer.currentTime;
-        
-        if (timeWatched > 30 || progress > 50) {
-          progressChecked = true;
-          const videoId = new URL(window.location.href).searchParams.get("v");
-          if (videoId) {
-            console.log("[Watchmarker] Video als gesehen markiert:", videoId);
-            saveWatchHistory({
-              id: videoId,
-              date: new Date().toLocaleDateString(),
-            });
-          }
-        }
-      }
-    });
+function handleVideoPlayback(videoPlayer, videoId, isHoverPreview = false) {
+  if (!videoPlayer || !videoId) return;
 
-    // Zusätzlich noch das Ende überwachen
-    videoPlayer.addEventListener("ended", () => {
-      const videoId = new URL(window.location.href).searchParams.get("v");
-      if (videoId) {
-        console.log("[Watchmarker] Video zu Ende geschaut:", videoId);
+  // Entferne die Initialisierungsprüfung, da sie bei Hover-Previews Probleme verursacht
+  let progressChecked = false;
+
+  const timeUpdateHandler = () => {
+    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+    const timeWatched = videoPlayer.currentTime;
+
+    // Nur loggen wenn gültige Werte vorhanden sind
+    if (!isNaN(progress) && !isNaN(timeWatched)) {
+      console.log(
+        `[Watchmarker] Video-Fortschritt für ${videoId}:`,
+        `Zeit: ${timeWatched.toFixed(1)}s,`,
+        `Dauer: ${videoPlayer.duration.toFixed(1)}s,`,
+        `Fortschritt: ${progress.toFixed(1)}%`
+      );
+
+      const shouldMarkAsWatched = isHoverPreview
+        ? timeWatched > 3 || progress > 10 // 3 Sekunden oder 10% für Hover-Previews
+        : timeWatched > 30 || progress > 50; // Original-Bedingung für normale Videos
+
+      if (!progressChecked && shouldMarkAsWatched) {
+        progressChecked = true;
+        console.log(
+          "[Watchmarker] Video als gesehen markiert:",
+          videoId,
+          isHoverPreview ? "(Hover-Preview)" : "(Normal)"
+        );
         saveWatchHistory({
           id: videoId,
           date: new Date().toLocaleDateString(),
         });
+
+        // Entferne den Event-Listener nach dem Markieren
+        videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
       }
-    });
-  }
+    }
+  };
+
+  videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
+
+  // Zusätzlich noch das Ende überwachen
+  videoPlayer.addEventListener("ended", () => {
+    if (!progressChecked) {
+      console.log("[Watchmarker] Video zu Ende geschaut:", videoId);
+      saveWatchHistory({
+        id: videoId,
+        date: new Date().toLocaleDateString(),
+      });
+    }
+  });
 }
 
 // Verbesserte Video-Erkennung
-function checkForVideoPlayer() {
-  handleVideoPlayback();
+function checkForVideoPlayers() {
+  const videoPlayers = document.querySelectorAll("video");
+  videoPlayers.forEach((videoPlayer) => {
+    const videoId = new URL(window.location.href).searchParams.get("v");
+    handleVideoPlayback(videoPlayer, videoId);
+  });
 }
 
+// Hover-Playback-Erkennung
+function checkForHoverPlayback() {
+  const thumbnails = document.querySelectorAll("ytd-thumbnail");
+  console.log("[Watchmarker] Gefundene Thumbnails:", thumbnails.length);
+
+  thumbnails.forEach((thumbnail) => {
+    if (!thumbnail.dataset.watchmarkerHover) {
+      thumbnail.dataset.watchmarkerHover = "true";
+
+      thumbnail.addEventListener("mouseover", () => {
+        const videoLink = thumbnail.querySelector("a");
+        if (!videoLink?.href.includes("watch?v=")) return;
+
+        const videoId = new URL(videoLink.href).searchParams.get("v");
+        console.log("[Watchmarker] Hover auf Thumbnail erkannt:", videoId);
+
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+          const previewContainer = document.querySelector(
+            "ytd-video-preview[active]"
+          );
+          const hoverPlayer = previewContainer?.querySelector("video");
+
+          if (hoverPlayer) {
+            console.log("[Watchmarker] Hover-Video gefunden für ID:", videoId);
+            clearInterval(checkInterval);
+            handleVideoPlayback(hoverPlayer, videoId, true);
+          } else {
+            console.log("[Watchmarker] Suche nach Hover-Video...", checkCount);
+            checkCount++;
+            if (checkCount > 10) clearInterval(checkInterval);
+          }
+        }, 200);
+      });
+    }
+  });
+}
+
+// Observer für Hover-Playback mit Throttling
+let throttleTimeout = null;
+const hoverObserver = new MutationObserver(() => {
+  if (!throttleTimeout) {
+    throttleTimeout = setTimeout(() => {
+      checkForHoverPlayback();
+      throttleTimeout = null;
+    }, 1000);
+  }
+});
+
 // Observer für Video-Player
-const videoObserver = new MutationObserver(checkForVideoPlayer);
+const videoObserver = new MutationObserver(checkForVideoPlayers);
 videoObserver.observe(document.body, {
+  childList: true,
+  subtree: true,
+});
+
+// Observer für Hover-Playback
+hoverObserver.observe(document.body, {
   childList: true,
   subtree: true,
 });
@@ -126,7 +201,11 @@ observer.observe(document.body, {
 
 // Initialer Check
 markWatchedVideos();
-handleVideoPlayback();
+checkForVideoPlayers();
+checkForHoverPlayback();
 
 // Regelmäßige Aktualisierung
 setInterval(markWatchedVideos, 2000);
+
+// Regelmäßige Aktualisierung der Hover-Erkennung
+setInterval(checkForHoverPlayback, 2000);

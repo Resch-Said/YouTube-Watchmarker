@@ -77,3 +77,23 @@
 ### Tags
 
 #video-detection #logging #performance #optimization
+
+## Hover-Effekt für Thumbnails
+
+[Timestamp: 2024-03-21]
+**Priority: High**
+
+### Änderungen
+
+- Thumbnails werden standardmäßig ausgegraut
+- Grauton wird entfernt, wenn über ein Thumbnail gehoved wird, Labels bleiben sichtbar
+
+### Technische Details
+
+- `content.js` wurde aktualisiert, um die CSS-Klasse für das Hover-Verhalten hinzuzufügen.
+- `content.css` wurde erstellt, um das Hover-Verhalten zu definieren.
+- `manifest.json` wurde aktualisiert, um die neue CSS-Datei zu integrieren.
+
+### Tags
+
+#hover-effect #ui-improvement #css
