@@ -377,6 +377,59 @@ markWatchedVideos();
 checkForVideoPlayers();
 checkForHoverPlayback();
 
+// Shorts-spezifische Funktionen
+let currentShortsId = null;
+
+function handleShortsNavigation() {
+  const shortsPlayer = document.querySelector("video[src]");
+  if (!shortsPlayer) return;
+
+  const newShortsId = window.location.pathname.split("/shorts/")[1];
+  if (newShortsId && newShortsId !== currentShortsId) {
+    currentShortsId = newShortsId;
+    console.log("[Watchmarker] Neues Short erkannt:", newShortsId);
+    handleVideoPlayback(shortsPlayer, newShortsId, false, true);
+  }
+}
+
+// URL-Änderungen in Shorts erkennen
+function watchShortsNavigation() {
+  let lastUrl = location.href;
+
+  // Beobachte URL-Änderungen
+  const urlObserver = new MutationObserver(() => {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      if (location.pathname.includes("/shorts/")) {
+        handleShortsNavigation();
+      }
+    }
+  });
+
+  // Beobachte Änderungen am Title-Element (YouTube ändert dies bei Shorts-Navigation)
+  urlObserver.observe(document.querySelector("title"), {
+    subtree: true,
+    characterData: true,
+    childList: true,
+  });
+
+  // Beobachte Shorts-Container für dynamische Updates
+  const shortsObserver = new MutationObserver((mutations) => {
+    if (location.pathname.includes("/shorts/")) {
+      handleShortsNavigation();
+    }
+  });
+
+  // Beobachte den Shorts-Container
+  shortsObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
+
+// Initialisiere Shorts-Beobachtung
+watchShortsNavigation();
+
 // Listener für Import-Aktualisierung
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "REFRESH_MARKERS") {
@@ -391,5 +444,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Sofortige Neuverarbeitung starten
     processVideos();
+    currentShortsId = null; // Reset Shorts tracking
   }
 });
