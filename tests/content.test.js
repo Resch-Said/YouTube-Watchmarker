@@ -1,23 +1,32 @@
+import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { StorageManager } from "../src/storageManager.js";
 import {
   getVideoIdFromUrl,
   handleVideoPlayback,
   VIDEO_TYPES,
   WATCH_THRESHOLDS,
   createWatchedLabel,
-  createDateLabel,  // Ergänze Import
-  markVideoAsWatched
+  createDateLabel,
+  markVideoAsWatched,
 } from "../src/videoUtils.js";
 
-// Mock StorageManager
-jest.mock('../src/storageManager.js', () => ({
+// Mock StorageManager mit asynchroner Factory-Funktion
+jest.mock("../src/storageManager.js", () => ({
+  __esModule: true,
   StorageManager: jest.fn().mockImplementation(() => ({
     getSettings: jest.fn().mockResolvedValue({
       ui: {
         labels: true,
-        grayscale: true
+        grayscale: true,
+        dateFormat: "DD.MM.YYYY"  // Hinzugefügt für Date-Label
       }
+    }),
+    saveProgress: jest.fn().mockResolvedValue(true),
+    getVideoProgress: jest.fn().mockResolvedValue({
+      completed: true,
+      watchedAt: new Date("2024-01-01").getTime()  // Hinzugefügt für Date-Label
     })
-  }))
+  })),
 }));
 
 const TEST_VIDEO_ID = "_CY69RkXYlw";
@@ -213,7 +222,7 @@ describe("UI Effects", () => {
 
   describe("Date Labels", () => {
     it("sollte Datum-Label korrekt erstellen", () => {
-      const testDate = new Date('2024-01-01');
+      const testDate = new Date("2024-01-01");
       const label = createDateLabel(testDate);
       expect(label.className).toBe("date-label");
       expect(label.textContent).toBe("01.01.2024");
@@ -221,13 +230,13 @@ describe("UI Effects", () => {
 
     it("sollte beide Labels beim Markieren hinzufügen", async () => {
       const thumbnail = document.querySelector("ytd-thumbnail");
-      const testDate = new Date('2024-01-01').getTime();
+      const testDate = new Date("2024-01-01").getTime();
 
       await markVideoAsWatched(thumbnail, testDate);
-      
+
       const watchedLabel = thumbnail.querySelector(".watched-label");
       const dateLabel = thumbnail.querySelector(".date-label");
-      
+
       expect(watchedLabel).toBeTruthy();
       expect(dateLabel).toBeTruthy();
       expect(dateLabel.textContent).toBe("01.01.2024");

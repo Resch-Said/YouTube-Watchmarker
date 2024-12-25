@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { PopupManager } from "../src/popup/popup.js";
 import { DEFAULT_SETTINGS } from "../src/storageManager.js";
 

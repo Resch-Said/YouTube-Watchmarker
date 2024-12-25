@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { StorageManager, STORAGE_KEYS } from "../src/storageManager.js";
 
 describe("Storage Manager", () => {
@@ -6,7 +7,7 @@ describe("Storage Manager", () => {
 
   beforeEach(() => {
     // Mock console.error für sauberere Test-Ausgabe
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    console.error = jest.fn();
 
     // Mock chrome.storage.local
     mockStorage = {

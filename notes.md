@@ -179,3 +179,115 @@
 - [ ] Allow customization of date format
 - [ ] Add localization support for date text
 - [ ] Optimize label rendering for performance
+
+## Main Functionality Implementation
+[Timestamp: 2024-01-09]
+
+### Overview
+- Implemented main functionality for video playback handling and thumbnail marking
+- Integrated with existing UI settings and storage
+
+### Technical Details
+- Uses MutationObserver to detect dynamically loaded videos and thumbnails
+- Tracks video playback progress and saves it to Chrome storage
+- Marks thumbnails as watched based on saved progress
+- Listens for settings updates and refreshes thumbnails accordingly
+
+### Code Structure
+- Main functionality in content.js
+- Manifest configuration in manifest.json
+- CSS styles in popup.css
+
+### Testing Strategy
+- Manual testing in the browser to verify functionality
+- Ensure compatibility with both Chrome and Edge
+
+### Future Improvements
+- [ ] Optimize performance for large number of thumbnails
+- [ ] Add support for additional video platforms
+- [ ] Enhance error handling and logging
+
+# Project Notes
+
+## [2023-10-XX] Test Fixes for content.test.js
+
+### Summary
+- Fixed the import and mocking of `storageManager.js` in `content.test.js`.
+
+### Details
+- Replaced `jest.unstable_mockModule` with `jest.mock`.
+- Defined the mock implementation for `StorageManager` to provide necessary methods.
+
+### Reason
+- The previous implementation caused a module not found error during tests.
+
+### Tags
+- #testing #jest #mocking
+
+## [2024-03-21] Test-Setup Fixes
+
+### ESM Mock Anpassung
+- Der StorageManager-Mock in content.test.js wurde für ESM (ECMAScript Modules) angepasst
+- Probleme mit `require` in ESM-Kontext behoben
+- Mock-Implementierung verwendet jetzt ESM-kompatible Syntax
+
+### Technische Details
+- Verwendung von `vi.mock()` statt `jest.mock()`
+- Mock als Klasse implementiert
+- Async/Await Funktionen beibehalten
+
+### Tags
+#testing #jest #esm #mocking
+
+## [2024-03-21] Test-Framework Kompatibilität
+
+### Änderung
+- Ersetzt `vi.mock()` durch `jest.mock()` in content.test.js
+- Korrigiert Framework-spezifische Syntax für Jest
+
+### Grund
+- Vitest-Syntax wurde fälschlicherweise verwendet
+- Jest ist das aktuelle Test-Framework des Projekts
+
+### Technische Details
+- Mock-Definition bleibt funktional gleich
+- Nur die Framework-spezifische API wurde angepasst
+
+### Tags
+#testing #jest #bugfix #compatibility
+
+## [2024-03-21] ESM Testing Fix
+
+### Problem
+- Jest ESM Mocking verursachte `require is not defined` Fehler
+- Falsche Reihenfolge von Imports und Mock-Definitionen
+
+### Lösung
+- Imports an den Anfang der Testdatei verschoben
+- Mock-Definition mit ESM-Syntax aktualisiert
+- `__esModule: true` Flag hinzugefügt
+- Hoisting für jest.mock sichergestellt
+
+### Best Practices
+- Bei ESM Tests immer Imports zuerst
+- Mock-Definitionen mit ESM-Kompatibilität
+- Explizite ESM Flags setzen
+
+### Tags
+#testing #jest #esm #mocking #bugfix
+
+## [2024-04-27] ESM Mock Anpassung in content.test.js
+
+### Änderung
+- Mock-Definition für `StorageManager` in `content.test.js` wurde auf eine asynchrone Factory-Funktion umgestellt.
+
+### Technische Details
+- `jest.mock` verwendet nun eine `async` Funktion, die ein ESM-kompatibles Mock-Objekt zurückgibt.
+- Dies behebt den `ReferenceError: require is not defined` Fehler durch korrekte Behandlung von ESM-Modulen.
+
+### Grund
+- Die vorherige synchrone Mock-Definition verursachte Fehler aufgrund der ESM-Einstellungen im Testumgebung.
+- Asynchrone Factory-Funktionen sind erforderlich, um ESM-Module korrekt zu mocken.
+
+### Tags
+#testing #jest #esm #mocking #bugfix

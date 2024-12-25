@@ -4,14 +4,16 @@
   "version": "1.0.0",
   "description": "Markiert gesehene YouTube Videos",
   "permissions": [
-    "storage",
-    "tabs"
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
   ],
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
       "js": ["src/content.js"],
-      "css": ["src/styles.css"]
+      "css": ["src/popup/popup.css"]
     }
   ],
   "action": {

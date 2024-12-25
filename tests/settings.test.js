@@ -1,5 +1,6 @@
 import { Settings, DEFAULT_SETTINGS } from "../src/settings.js";
 import { StorageManager, STORAGE_KEYS } from "../src/storageManager.js";
+import { jest } from '@jest/globals';
 
 describe("Settings Manager", () => {
   let settings;

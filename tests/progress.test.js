@@ -1,4 +1,5 @@
 import { ProgressHandler, PROGRESS_STATES } from "../src/progressHandler.js";
+import { jest } from '@jest/globals';
 
 const TEST_VIDEO_ID = "_CY69RkXYlw";
 
