@@ -17,7 +17,7 @@
 - [✅] Popup mit grundlegenden Einstellungen
 - [✅] Grayscale-Effekt für gesehene Videos
 - [✅] "Watched"-Label Anzeige
-- [x] Datum-Label Anzeige
+- [✅] Datum-Label Anzeige
 
 ## Phase 2: Erweiterte Video-Typen 🎥
 

@@ -4,6 +4,7 @@ import {
   VIDEO_TYPES,
   WATCH_THRESHOLDS,
   createWatchedLabel,
+  createDateLabel,  // Ergänze Import
   markVideoAsWatched
 } from "../src/videoUtils.js";
 
@@ -207,6 +208,29 @@ describe("UI Effects", () => {
       await markVideoAsWatched(thumbnail);
       const label = thumbnail.querySelector(".watched-label");
       expect(label).toBeTruthy();
+    });
+  });
+
+  describe("Date Labels", () => {
+    it("sollte Datum-Label korrekt erstellen", () => {
+      const testDate = new Date('2024-01-01');
+      const label = createDateLabel(testDate);
+      expect(label.className).toBe("date-label");
+      expect(label.textContent).toBe("01.01.2024");
+    });
+
+    it("sollte beide Labels beim Markieren hinzufügen", async () => {
+      const thumbnail = document.querySelector("ytd-thumbnail");
+      const testDate = new Date('2024-01-01').getTime();
+
+      await markVideoAsWatched(thumbnail, testDate);
+      
+      const watchedLabel = thumbnail.querySelector(".watched-label");
+      const dateLabel = thumbnail.querySelector(".date-label");
+      
+      expect(watchedLabel).toBeTruthy();
+      expect(dateLabel).toBeTruthy();
+      expect(dateLabel.textContent).toBe("01.01.2024");
     });
   });
 });

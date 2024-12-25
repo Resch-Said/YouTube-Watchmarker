@@ -111,7 +111,33 @@ export function createWatchedLabel() {
   return label;
 }
 
-export async function markVideoAsWatched(thumbnailElement) {
+export function createDateLabel(date) {
+  const label = document.createElement('div');
+  label.className = 'date-label';
+  
+  // Formatiere das Datum mit führenden Nullen
+  const dateObj = new Date(date);
+  const day = dateObj.getDate().toString().padStart(2, '0');
+  const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const year = dateObj.getFullYear();
+  
+  label.textContent = `${day}.${month}.${year}`;
+  label.style.cssText = `
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 2px;
+    font-size: 12px;
+    z-index: 1000;
+    pointer-events: none;
+  `;
+  return label;
+}
+
+export async function markVideoAsWatched(thumbnailElement, watchDate = Date.now()) {
   if (!thumbnailElement) return;
   
   try {
@@ -127,14 +153,22 @@ export async function markVideoAsWatched(thumbnailElement) {
     // Füge Watched-Label hinzu wenn aktiviert
     if (settings.ui.labels) {
       // Entferne existierendes Label falls vorhanden
-      const existingLabel = thumbnailElement.querySelector('.watched-label');
-      if (existingLabel) existingLabel.remove();
+      const existingWatchedLabel = thumbnailElement.querySelector('.watched-label');
+      if (existingWatchedLabel) existingWatchedLabel.remove();
       
       // Füge neues Label hinzu
-      const label = createWatchedLabel();
-      thumbnailElement.style.position = 'relative';
-      thumbnailElement.appendChild(label);
+      const watchedLabel = createWatchedLabel();
+      thumbnailElement.appendChild(watchedLabel);
+
+      // Füge Datum Label hinzu
+      const existingDateLabel = thumbnailElement.querySelector('.date-label');
+      if (existingDateLabel) existingDateLabel.remove();
+      
+      const dateLabel = createDateLabel(watchDate);
+      thumbnailElement.appendChild(dateLabel);
     }
+
+    thumbnailElement.style.position = 'relative';
   } catch (error) {
     console.error('Error in markVideoAsWatched:', error);
   }
