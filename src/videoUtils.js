@@ -55,21 +55,23 @@ function handleVideoPlayback(videoPlayer, videoId, videoType = 'standard') {
     accumulatedTime: 0,
     lastUpdate: Date.now(),
     progressChecked: false,
-    watchThresholds: WATCH_THRESHOLDS[videoType]
+    watchThresholds: WATCH_THRESHOLDS[videoType],
+    lastTimeUpdate: 0
   };
 
   console.debug(`[Watchmarker] Schwellenwerte für ${videoType}:`, state.watchThresholds);
 
   const updateProgress = () => {
     const now = Date.now();
-    const timeDiff = (now - state.lastUpdate) / 1000;
-    const previousTime = state.accumulatedTime;
+    const timeDiff = (now - state.lastUpdate) / 1000;  // Zeit seit letztem Update in Sekunden
     
-    if (videoPlayer.currentTime > 0) {
-      state.accumulatedTime = videoPlayer.currentTime;
+    if (videoPlayer.currentTime > 0 && !videoPlayer.paused) {
+      // Nur Zeit hinzufügen wenn Video läuft
+      state.accumulatedTime += timeDiff;
     }
     
     state.lastUpdate = now;
+    state.lastTimeUpdate = videoPlayer.currentTime;
 
     // Debug-Logs für Progress-Updates
     console.debug(`[Watchmarker] Progress Update für ${videoId}:`, {

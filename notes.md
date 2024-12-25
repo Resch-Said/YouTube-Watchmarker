@@ -1,8 +1,4 @@
-# YouTube Watchmarker - Entwicklungsnotizen
-
-[Timestamp: 2024-03-21]
-**Notiz:** "percentMode" in den Default-Thresholds ergänzt und Tests entsprechend aktualisiert.
-**Priority: High**
+# YouTube Watchmarker
 
 ## Project Goals and Requirements
 - Mark watched YouTube videos
@@ -11,21 +7,39 @@
 ## Current Tasks and Progress
 - [x] Fix initialization and video detection issues
 - [x] Add debug logging for better traceability
+- [x] Correct accumulated time calculation
+- [x] Save watched videos reliably
+- [x] Detect hover events on thumbnails
+- [x] Handle invalid extension context gracefully
 
 ## Technical Decisions and Rationale
 - **Export Functions in `videoUtils.js`**: Ensure all utility functions are correctly exported to be used in `content.js`.
 - **Destructure Imports in `content.js`**: Explicitly destructure and assign utility functions to avoid `undefined` errors.
+- **Accumulate Time Independently**: Track accumulated time independently of `currentTime` to handle seeking correctly.
+- **Save Progress Frequently**: Save video progress frequently to ensure data is up-to-date.
+- **Detect Hover Events**: Add hover event listeners to detect and handle video previews.
+- **Handle Invalid Extension Context**: Implement robust error handling to manage invalid extension context gracefully.
 
 ## Problem Solutions and Workarounds
 - **TypeError: `this.utils.getVideoIdFromUrl` is not a function**: Fixed by correctly exporting and importing functions.
+- **Accumulate Time Correctly**: Fixed by tracking accumulated time independently of `currentTime`.
+- **Save Watched Videos**: Ensured progress is saved frequently and correctly.
+- **Detect Hover Events**: Added event listeners to detect hover events on thumbnails.
+- **Handle Invalid Extension Context**: Added checks and error handling to manage invalid extension context.
 
 ## Best Practices Discovered
 - Use explicit destructuring for imports to avoid runtime errors.
 - Add debug logging to trace initialization and function calls.
+- Track accumulated time independently to handle seeking correctly.
+- Save progress frequently to ensure data is up-to-date.
+- Detect and handle hover events for video previews.
+- Implement robust error handling for invalid extension context.
 
 ## Code Patterns and Architecture Decisions
 - Follow modular design by separating utility functions into `videoUtils.js`.
 - Use MutationObserver to dynamically detect and handle new video elements.
+- Add event listeners to detect hover events on thumbnails.
+- Implement error handling to manage invalid extension context gracefully.
 
 ## Important TODOs and Future Improvements
 - [ ] Optimize performance by reducing the frequency of progress checks.
@@ -33,6 +47,9 @@
 
 ## Timestamps
 - **2023-10-XX**: Fixed TypeError by updating exports and imports.
+- **2023-10-XX**: Corrected accumulated time calculation.
+- **2023-10-XX**: Added hover event detection for thumbnails.
+- **2023-10-XX**: Implemented error handling for invalid extension context.
 
 ## Aktuelle Implementierung
 

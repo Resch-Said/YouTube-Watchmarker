@@ -61,11 +61,15 @@ async function initializeContentScript() {
               // Prüfe ob der Node selbst ein Thumbnail ist
               if (node.matches("ytd-thumbnail")) {
                 this.processThumbnail(node);
+                this.initThumbnailHover(node);
               }
 
               // Suche nach Thumbnails innerhalb des Elements
               const thumbnails = Array.from(node.getElementsByTagName("ytd-thumbnail"));
-              thumbnails.forEach(thumb => this.processThumbnail(thumb));
+              thumbnails.forEach(thumb => {
+                this.processThumbnail(thumb);
+                this.initThumbnailHover(thumb);
+              });
             }
           } catch (error) {
             console.error("[Watchmarker] Error processing node:", error);
@@ -114,17 +118,23 @@ async function initializeContentScript() {
         this.activeVideos.set(videoId, handler);
 
         // Überprüfe regelmäßig den Fortschritt
-        setInterval(async () => {
+        const progressInterval = setInterval(async () => {
           const progress = handler.getWatchProgress();
           console.log(`[Watchmarker] Video ${videoId} Fortschritt:`, {
             accumulatedTime: progress.accumulatedTime,
             completed: progress.completed,
           });
 
-          if (progress.completed) {
-            console.log(`[Watchmarker] Video ${videoId} als gesehen markiert`);
-            await this.storageManager.saveProgress(videoId, progress);
-            this.markThumbnailsAsWatched(videoId);
+          if (progress.accumulatedTime >= this.WATCH_THRESHOLDS[videoType].time || 
+              progress.completed) {
+            // Speichern mit Titel
+            const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent || '';
+            await this.storageManager.saveProgress(videoId, progress, videoTitle);
+            
+            if (progress.completed) {
+              this.markThumbnailsAsWatched(videoId);
+              clearInterval(progressInterval); // Stoppe Tracking wenn komplett
+            }
           }
         }, 1000);
       }
@@ -161,6 +171,30 @@ async function initializeContentScript() {
             // Aktualisiere alle sichtbaren Thumbnails
             const thumbnails = document.querySelectorAll("ytd-thumbnail");
             thumbnails.forEach((thumb) => this.processThumbnail(thumb));
+          }
+        });
+      }
+
+      initThumbnailHover(thumbnail) {
+        let hoverVideo = null;
+        let hoverStartTime = 0;
+
+        thumbnail.addEventListener('mouseenter', () => {
+          hoverStartTime = Date.now();
+          const checkForVideo = setInterval(() => {
+            hoverVideo = thumbnail.querySelector('video');
+            if (hoverVideo) {
+              clearInterval(checkForVideo);
+              this.handleNewVideo(hoverVideo);
+            }
+          }, 100);
+        });
+
+        thumbnail.addEventListener('mouseleave', () => {
+          if (hoverVideo) {
+            const hoverDuration = (Date.now() - hoverStartTime) / 1000;
+            console.log(`[Watchmarker] Hover duration: ${hoverDuration}s`);
+            hoverVideo = null;
           }
         });
       }

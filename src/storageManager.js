@@ -34,10 +34,26 @@ const DEFAULT_SETTINGS = {
 export class StorageManager {
   constructor() {
     this.storage = chrome.storage.local;
+    this.isValid = true;
+  }
+
+  async checkExtensionContext() {
+    // Prüft ob der Extension-Kontext noch gültig ist
+    if (chrome.runtime.lastError || !chrome.runtime || !chrome.storage) {
+      this.isValid = false;
+      throw new Error("Extension context invalidated");
+    }
   }
 
   async saveProgress(videoId, progress, videoTitle = "") {
     try {
+      await this.checkExtensionContext();
+      
+      if (!this.isValid) {
+        console.warn("[Watchmarker] Extension context invalid, skipping save");
+        return false;
+      }
+
       const history = await this.getWatchHistory();
       const currentEntry = history[videoId] || { watchCount: 0 };
 
@@ -65,10 +81,18 @@ export class StorageManager {
 
   async getWatchHistory() {
     try {
+      await this.checkExtensionContext();
+      
+      if (!this.isValid) {
+        console.warn("[Watchmarker] Extension context invalid, returning empty history");
+        return {};
+      }
+
       const result = await this.storage.get(STORAGE_KEYS.WATCH_HISTORY);
       return result[STORAGE_KEYS.WATCH_HISTORY] || {};
     } catch (error) {
       console.error("Error getting watch history:", error);
+      // Bei ungültigem Kontext leeres Objekt zurückgeben
       return {};
     }
   }
