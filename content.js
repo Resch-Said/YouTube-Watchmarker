@@ -7,6 +7,55 @@ const PROCESS_INTERVAL = 3000; // 3 Sekunden
 const THROTTLE_DELAY = 1500; // 1.5 Sekunden
 const HOVER_CHECK_INTERVAL = 250; // 250ms
 
+let settings = {
+  watchedTime: 30,
+  watchedProgress: 50,
+  useCustomShortsSettings: true,
+  shortsWatchedTime: 15,
+  shortsWatchedProgress: 30,
+  useCustomHoverSettings: true,
+  hoverWatchedTime: 30,
+  hoverWatchedProgress: 50,
+};
+
+// Lade Einstellungen beim Start und bei Änderungen
+function loadSettings() {
+  chrome.storage.local.get(
+    [
+      "watchedTime",
+      "watchedProgress",
+      "useCustomShortsSettings",
+      "shortsWatchedTime",
+      "shortsWatchedProgress",
+      "useCustomHoverSettings",
+      "hoverWatchedTime",
+      "hoverWatchedProgress",
+    ],
+    (data) => {
+      settings = {
+        watchedTime: data.watchedTime || 30,
+        watchedProgress: data.watchedProgress || 50,
+        useCustomShortsSettings: data.useCustomShortsSettings ?? true,
+        shortsWatchedTime: data.shortsWatchedTime || 15,
+        shortsWatchedProgress: data.shortsWatchedProgress || 30,
+        useCustomHoverSettings: data.useCustomHoverSettings ?? true,
+        hoverWatchedTime: data.hoverWatchedTime || 30,
+        hoverWatchedProgress: data.hoverWatchedProgress || 50,
+      };
+    }
+  );
+}
+
+// Initialer Load der Einstellungen
+loadSettings();
+
+// Höre auf Settings-Updates
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "SETTINGS_UPDATED") {
+    loadSettings();
+  }
+});
+
 async function getWatchHistory() {
   return new Promise((resolve) => {
     chrome.storage.local.get("watchHistory", (data) => {
@@ -133,75 +182,40 @@ function handleVideoPlayback(
 
   let progressChecked = false;
 
-  chrome.storage.local.get(
-    [
-      "watchedTime",
-      "watchedProgress",
-      "useCustomShortsSettings",
-      "shortsWatchedTime",
-      "shortsWatchedProgress",
-      "useCustomHoverSettings",
-      "hoverWatchedTime",
-      "hoverWatchedProgress",
-    ],
-    (settings) => {
-      const useCustomShorts = settings.useCustomShortsSettings ?? true;
-      const useCustomHover = settings.useCustomHoverSettings ?? true;
+  const timeUpdateHandler = () => {
+    const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+    const timeWatched = videoPlayer.currentTime;
 
-      // Standard-Werte
-      let defaultTime = 30;
-      let defaultProgress = 50;
+    if (!isNaN(progress) && !isNaN(timeWatched)) {
+      const videoType = getVideoType(isHoverPreview, isShort);
+      const thresholds = getThresholds(isShort, isHoverPreview);
+      console.log(
+        `[Watchmarker] ${videoType}:`,
+        `${timeWatched.toFixed(1)}s/${videoPlayer.duration.toFixed(1)}s`,
+        `(${progress.toFixed(1)}%)`,
+        `Ziel: ${thresholds.time}s/${thresholds.progress}%`
+      );
 
-      // Anpassen basierend auf Video-Typ
-      if (isShort) {
-        if (useCustomShorts) {
-          defaultTime = settings.shortsWatchedTime || 15;
-          defaultProgress = settings.shortsWatchedProgress || 30;
-        }
+      const shouldMarkAsWatched = checkWatchThresholds(
+        timeWatched,
+        videoPlayer.duration,
+        isShort,
+        isHoverPreview
+      );
+
+      if (!progressChecked && shouldMarkAsWatched) {
+        progressChecked = true;
+        saveWatchHistory({
+          id: videoId,
+          date: new Date().toLocaleDateString(),
+        });
+
+        videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
       }
-
-      // Hover-Einstellungen überschreiben wenn aktiviert
-      const requiredTime =
-        isHoverPreview && useCustomHover
-          ? settings.hoverWatchedTime || defaultTime
-          : defaultTime;
-
-      const requiredProgress =
-        isHoverPreview && useCustomHover
-          ? settings.hoverWatchedProgress || defaultProgress
-          : defaultProgress;
-
-      const timeUpdateHandler = () => {
-        const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-        const timeWatched = videoPlayer.currentTime;
-
-        if (!isNaN(progress) && !isNaN(timeWatched)) {
-          const videoType = getVideoType(isHoverPreview, isShort);
-          console.log(
-            `[Watchmarker] ${videoType}:`,
-            `${timeWatched.toFixed(1)}s/${videoPlayer.duration.toFixed(1)}s`,
-            `(${progress.toFixed(1)}%)`,
-            `Ziel: ${requiredTime}s/${requiredProgress}%`
-          );
-
-          const shouldMarkAsWatched =
-            timeWatched > requiredTime || progress > requiredProgress;
-
-          if (!progressChecked && shouldMarkAsWatched) {
-            progressChecked = true;
-            saveWatchHistory({
-              id: videoId,
-              date: new Date().toLocaleDateString(),
-            });
-
-            videoPlayer.removeEventListener("timeupdate", timeUpdateHandler);
-          }
-        }
-      };
-
-      videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
     }
-  );
+  };
+
+  videoPlayer.addEventListener("timeupdate", timeUpdateHandler);
 
   videoPlayer.addEventListener("ended", () => {
     if (!progressChecked) {
@@ -212,6 +226,48 @@ function handleVideoPlayback(
       });
     }
   });
+}
+
+// Hilfsfunktion um die korrekten Schwellenwerte basierend auf dem Videotyp zu erhalten
+function getThresholds(isShorts, isHover) {
+  if (isHover) {
+    if (!settings.useCustomHoverSettings) {
+      return {
+        time: settings.watchedTime,
+        progress: settings.watchedProgress,
+      };
+    }
+    return {
+      time: settings.hoverWatchedTime,
+      progress: settings.hoverWatchedProgress,
+    };
+  }
+
+  if (isShorts) {
+    if (!settings.useCustomShortsSettings) {
+      return {
+        time: settings.watchedTime,
+        progress: settings.watchedProgress,
+      };
+    }
+    return {
+      time: settings.shortsWatchedTime,
+      progress: settings.shortsWatchedProgress,
+    };
+  }
+
+  return {
+    time: settings.watchedTime,
+    progress: settings.watchedProgress,
+  };
+}
+
+// Verwende diese Funktion für die Schwellenwert-Überprüfung
+function checkWatchThresholds(currentTime, duration, isShorts, isHover) {
+  const thresholds = getThresholds(isShorts, isHover);
+  const progress = (currentTime / duration) * 100;
+
+  return currentTime >= thresholds.time || progress >= thresholds.progress;
 }
 
 // Verbesserte Video-Erkennung
@@ -323,16 +379,16 @@ checkForHoverPlayback();
 
 // Listener für Import-Aktualisierung
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'REFRESH_MARKERS') {
+  if (message.type === "REFRESH_MARKERS") {
     // Cache leeren
     processedVideos.clear();
     processedHovers.clear();
-    
+
     // Alle Markierungen entfernen
-    document.querySelectorAll('[data-watchmarker-processed]').forEach(el => {
-      el.removeAttribute('data-watchmarker-processed');
+    document.querySelectorAll("[data-watchmarker-processed]").forEach((el) => {
+      el.removeAttribute("data-watchmarker-processed");
     });
-    
+
     // Sofortige Neuverarbeitung starten
     processVideos();
   }

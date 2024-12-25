@@ -60,33 +60,48 @@ function updateSettingsVisibility() {
 
 // Speichere Einstellungen
 document.getElementById("saveSettings").addEventListener("click", () => {
+  const watchedTime = parseInt(document.getElementById("watchedTime").value);
+  const watchedProgress = parseInt(
+    document.getElementById("watchedProgress").value
+  );
+  const useCustomShortsSettings = document.getElementById(
+    "useCustomShortsSettings"
+  ).checked;
+  const useCustomHoverSettings = document.getElementById(
+    "useCustomHoverSettings"
+  ).checked;
+
   const settings = {
     // Normale Videos
-    watchedTime: parseInt(document.getElementById("watchedTime").value),
-    watchedProgress: parseInt(document.getElementById("watchedProgress").value),
+    watchedTime: watchedTime,
+    watchedProgress: watchedProgress,
 
     // Shorts
-    useCustomShortsSettings: document.getElementById("useCustomShortsSettings")
-      .checked,
-    shortsWatchedTime: parseInt(
-      document.getElementById("shortsWatchedTime").value
-    ),
-    shortsWatchedProgress: parseInt(
-      document.getElementById("shortsWatchedProgress").value
-    ),
+    useCustomShortsSettings: useCustomShortsSettings,
+    shortsWatchedTime: useCustomShortsSettings
+      ? parseInt(document.getElementById("shortsWatchedTime").value)
+      : watchedTime,
+    shortsWatchedProgress: useCustomShortsSettings
+      ? parseInt(document.getElementById("shortsWatchedProgress").value)
+      : watchedProgress,
 
     // Hover
-    useCustomHoverSettings: document.getElementById("useCustomHoverSettings")
-      .checked,
-    hoverWatchedTime: parseInt(
-      document.getElementById("hoverWatchedTime").value
-    ),
-    hoverWatchedProgress: parseInt(
-      document.getElementById("hoverWatchedProgress").value
-    ),
+    useCustomHoverSettings: useCustomHoverSettings,
+    hoverWatchedTime: useCustomHoverSettings
+      ? parseInt(document.getElementById("hoverWatchedTime").value)
+      : watchedTime,
+    hoverWatchedProgress: useCustomHoverSettings
+      ? parseInt(document.getElementById("hoverWatchedProgress").value)
+      : watchedProgress,
   };
 
   chrome.storage.local.set(settings, () => {
+    // Benachrichtige alle aktiven YouTube-Tabs über die Änderung
+    chrome.tabs.query({ url: "*://*.youtube.com/*" }, (tabs) => {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED" });
+      });
+    });
     alert("Einstellungen gespeichert!");
   });
 });
