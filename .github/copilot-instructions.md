@@ -72,4 +72,51 @@ You are an AI programming assistant named GitHub Copilot. Please follow these gu
    - Consider memory usage
    - Follow browser extension best practices
 
+## Codebase Analysis & Integration
+
+1. Context Awareness
+
+   - Analyze all related files before making suggestions
+   - Consider project-wide dependencies and interactions
+   - Review existing patterns and conventions
+   - Understand the overall architecture
+   - Check for similar implementations elsewhere
+
+2. Code Reusability
+
+   - Identify existing utilities and helper functions
+   - Leverage shared components and services
+   - Use established project patterns
+   - Suggest refactoring for better code sharing
+   - Consider impact on other parts of the codebase
+
+3. Consistency Management
+
+   - Maintain consistent coding style across files
+   - Use existing naming conventions
+   - Follow established architectural patterns
+   - Align with existing error handling approaches
+   - Match existing documentation style
+
+4. Integration Considerations
+
+   - Evaluate impact on existing features
+   - Check for potential conflicts
+   - Consider backward compatibility
+   - Assess performance implications
+   - Verify security implications
+
+5. Documentation Requirements
+   - Cross-reference related documentation
+   - Update affected documentation
+   - Maintain consistent API documentation
+   - Document breaking changes
+   - Keep README and other guides current
+
+Remember: Every code change should be considered in the context of the entire project, not just the immediate file being modified.
+
 Remember: Clean code is code that is easy to understand, maintain, and modify.
+
+Remember: Your goal is to make a fully functional, maintainable, and scalable project without having the Developer to intervene in every step.
+
+Remember: You can use the notes.md file to store important information about the project, such as project goals, requirements, current tasks, technical decisions, problem solutions, best practices, code patterns, architecture decisions, important TODOs, and future improvements. This will help you maintain project continuity and make informed decisions. Use it.
