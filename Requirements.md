@@ -299,3 +299,75 @@
   - Build-Prozess
   - Code Coverage Report
   - Bundle Size Analysis
+
+## Entwicklungsphasen
+
+### Phase 1: Grundfunktionalität
+- Basis-Extension-Setup
+- Einfache Erkennung von Video-Betrachtungen:
+  - Positionsbasiertes Tracking für normale Videos
+  - Fester Schwellenwert (50%)
+- Grundlegende lokale Speicherung der Markierungen
+- Minimales UI:
+  - Einfache visuelle Markierung gesehener Videos
+  - Basis-Einstellungsseite
+- Grundlegende Entwicklungsinfrastruktur:
+  - Build-System
+  - Basic Testing
+  - Logging-System
+
+### Phase 2: Erweitertes Tracking & UI
+- Implementierung verschiedener Tracking-Modi:
+  - Zeitbasiertes Tracking
+  - Separate Logik für Shorts und Previews
+- Erweiterte UI-Funktionen:
+  - Fortschrittsanzeige pro Video
+  - Konfigurierbare Positionen und Formate
+  - Manuelle Markierung/Demarkierung
+- Ausblenden gesehener Videos:
+  - Toggle-Funktionalität
+  - Keyboard-Shortcuts
+- Erweiterte Einstellungsmöglichkeiten:
+  - Separate Schwellenwerte pro Videotyp
+  - Anpassbare Visualisierungen
+
+### Phase 3: Datenverwaltung & Cloud-Integration
+- Implementierung der Cloud-Synchronisation:
+  - OneDrive-Integration
+  - Google Drive-Integration
+  - Konfliktmanagement
+- Export/Import-Funktionalität
+- Watchlist-Verwaltung:
+  - Tabellarische Übersicht
+  - Such- und Filterfunktionen
+- Erweitertes Datenmanagement:
+  - Backup-System
+  - Daten-Cleanup-Funktionen
+
+### Phase 4: Optimierung & Erweiterungen
+- Performance-Optimierungen:
+  - Caching-System
+  - Lazy Loading
+  - Virtualisierung
+- Erweiterte Funktionen:
+  - YouTube-Verlauf-Integration
+  - Erweiterte Statistiken
+  - Batch-Operationen
+- UI/UX-Verbesserungen:
+  - Animationen
+  - Responsiveness
+  - Barrierefreiheit
+- Erweiterte Tests:
+  - E2E-Tests
+  - Performance-Tests
+  - Stress-Tests
+
+### Phase 5: Polishing & Release
+- Fehlerbehebung und Stabilisierung
+- Dokumentation vervollständigen
+- Performance-Feintuning
+- Store-Release-Vorbereitungen:
+  - Store-Listing
+  - Screenshots
+  - Marketingmaterial
+- Community-Feedback-Integration
