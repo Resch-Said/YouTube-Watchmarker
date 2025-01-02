@@ -303,6 +303,7 @@
 ## Entwicklungsphasen
 
 ### Phase 1: Grundfunktionalität
+
 - Basis-Extension-Setup
 - Einfache Erkennung von Video-Betrachtungen:
   - Positionsbasiertes Tracking für normale Videos
@@ -317,6 +318,7 @@
   - Logging-System
 
 ### Phase 2: Erweitertes Tracking & UI
+
 - Implementierung verschiedener Tracking-Modi:
   - Zeitbasiertes Tracking
   - Separate Logik für Shorts und Previews
@@ -332,6 +334,7 @@
   - Anpassbare Visualisierungen
 
 ### Phase 3: Datenverwaltung & Cloud-Integration
+
 - Implementierung der Cloud-Synchronisation:
   - OneDrive-Integration
   - Google Drive-Integration
@@ -345,6 +348,7 @@
   - Daten-Cleanup-Funktionen
 
 ### Phase 4: Optimierung & Erweiterungen
+
 - Performance-Optimierungen:
   - Caching-System
   - Lazy Loading
@@ -363,6 +367,7 @@
   - Stress-Tests
 
 ### Phase 5: Polishing & Release
+
 - Fehlerbehebung und Stabilisierung
 - Dokumentation vervollständigen
 - Performance-Feintuning
